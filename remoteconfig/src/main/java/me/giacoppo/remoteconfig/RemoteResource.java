@@ -33,7 +33,7 @@ public final class RemoteResource<T> {
      * @param request  Config request
      * @param callback callback
      */
-    public void fetch(@NonNull final RemoteConfig.Request request, @Nullable final RemoteConfig.Callback<T> callback) {
+    public void fetch(@NonNull final RemoteConfig.Request request, @Nullable final RemoteConfig.Callback callback) {
         Utilities.requireNonNull(request, RemoteConfigMessages.NOT_VALID_REQUEST);
 
         if (request.cacheExpiration > 0) {

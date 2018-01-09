@@ -197,9 +197,8 @@ public final class RemoteConfig {
         static LruCache<String, RemoteResource> lruCache;
     }
 
-    public interface Callback<T> {
+    public interface Callback{
         void onSuccess();
-
         void onError(Throwable t);
     }
 }
