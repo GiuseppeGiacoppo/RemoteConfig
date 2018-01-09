@@ -1,21 +1,15 @@
 package me.giacoppo.remoteconfig;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
 @SuppressWarnings({"WeakerAccess", "unused", "UnusedReturnValue"})
-public final class RemoteConfig<T> {
-    private final RemoteConfigSettings<T> remoteConfigSettings;
-    private final RemoteConfigRepository<T> repo;
-
+public final class RemoteConfig {
     /**
      * Init library with default values
      *
@@ -47,147 +41,38 @@ public final class RemoteConfig<T> {
     }
 
     /**
-     * Get a new instance of Remote Config
+     * Get a new instance of Remote Resource
      *
      * @param classOfConfig class of config
      * @param <T>           Generic representing the config object class
-     * @return an instance of a RemoteConfig of the specific config class
+     * @return an instance of a RemoteResource tht wraps a specific config class
      */
     @NonNull
-    public static <T> RemoteConfig<T> of(@NonNull Class<T> classOfConfig) {
+    public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig) {
         Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
         Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
 
-        RemoteConfig<T> remoteConfig;
+        RemoteResource<T> remoteResource;
         final String key = classOfConfig.getSimpleName().toLowerCase();
 
         if (Holder.lruCache != null) {
             //noinspection unchecked
-            remoteConfig = (RemoteConfig<T>) Holder.lruCache.get(key);
-            if (remoteConfig != null) {
+            remoteResource = (RemoteResource<T>) Holder.lruCache.get(key);
+            if (remoteResource != null) {
                 Logger.log(Logger.DEBUG, key + " already in cache");
-                return remoteConfig;
+                return remoteResource;
             }
         }
 
         RemoteConfigSettings<T> settings = RemoteConfigSettings.newBuilder(classOfConfig).build();
-        remoteConfig = new RemoteConfig<>(settings);
+        remoteResource = new RemoteResource<>(settings);
 
         if (Holder.lruCache != null) {
             Logger.log(Logger.DEBUG, key + " not cached. Adding now");
-            Holder.lruCache.put(key, remoteConfig);
+            Holder.lruCache.put(key, remoteResource);
         }
 
-        return remoteConfig;
-    }
-
-    /* Instance methods */
-
-    private RemoteConfig(RemoteConfigSettings<T> remoteConfigSettings) {
-        this.remoteConfigSettings = remoteConfigSettings;
-        repo = RemoteConfigRepository.create(Holder.context.get(), remoteConfigSettings.getClassOfConfig());
-    }
-
-    /**
-     * Set a default value
-     *
-     * @param config config that will be stored as default value
-     */
-    public void setDefaultConfig(@NonNull T config) {
-        repo.setDefaultConfig(config);
-    }
-
-    /**
-     * Fetch a config from a specific URL
-     *
-     * @param request  Config request
-     * @param callback callback
-     */
-    public void fetch(@NonNull final Request request, @Nullable final Callback<T> callback) {
-        Utilities.requireNonNull(request, RemoteConfigMessages.NOT_VALID_REQUEST);
-
-        if (request.cacheExpiration > 0) {
-            // avoid network call if fetched config is still valid
-            long lastFetchedTimestamp = repo.getLastFetchedTimestamp();
-            if (System.currentTimeMillis() - lastFetchedTimestamp < request.cacheExpiration) {
-                Logger.log(Logger.DEBUG, "Cached fetched config still valid");
-                // last fetched config is still valid
-                if (callback != null) {
-                    callback.onSuccess();
-                }
-
-                return;
-            }
-        }
-
-        NetworkModule.get(request.url, request.headers, new NetworkModule.HttpCallback() {
-            @Override
-            public void onSuccess(@Nullable String value) {
-                if (value != null) {
-                    T config = Utilities.Json.from(value, remoteConfigSettings.getClassOfConfig());
-
-                    // update fetched config
-                    repo.setLastFetchedConfig(config);
-
-                    Logger.log(Logger.DEBUG, "Successfully fetched and stored config from " + request.url);
-
-                    if (callback != null)
-                        // notify on ui thread
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onSuccess();
-                            }
-                        });
-                } else {
-                    Logger.log(Logger.DEBUG, "Fetched value is null");
-                    if (callback != null)
-                        // notify on ui thread
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onError(new IllegalArgumentException("Fetched value is null"));
-                            }
-                        });
-                }
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                Logger.log(Logger.DEBUG, "Error fetching config from url " + request.url);
-                Logger.log(Logger.DEBUG, t.getMessage());
-
-                if (callback != null)
-                    // notify on ui thread
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onError(t);
-                        }
-                    });
-            }
-        });
-    }
-
-    /**
-     * Activate last fetched config
-     */
-    public void activateFetched() {
-        repo.activateFetchedConfig();
-    }
-
-    /**
-     * Returns last activated config, if present. Otherwise will return the default config, or null
-     *
-     * @return last activated config, if present. Otherwise will return the default config, or null
-     */
-    @Nullable
-    public T get() {
-        return repo.getActivated();
-    }
-
-    public void clear() {
-        repo.clearConfig();
+        return remoteResource;
     }
 
     /* Inner classes*/
@@ -249,9 +134,9 @@ public final class RemoteConfig<T> {
 
     public static class Request {
         private final Builder builder;
-        private final String url;
-        private final long cacheExpiration;
-        private final Map<String, String> headers;
+        final String url;
+        final long cacheExpiration;
+        final Map<String, String> headers;
 
         private Request(Builder builder) {
             this.builder = builder;
@@ -305,11 +190,11 @@ public final class RemoteConfig<T> {
         }
     }
 
-    private final static class Holder {
+    final static class Holder {
         static WeakReference<Context> context;
         static final long baseRequestCacheIntervalInMillis = 14400000; //4h
         static final int baseLRUCacheSize = 3;
-        static LruCache<String, RemoteConfig> lruCache;
+        static LruCache<String, RemoteResource> lruCache;
     }
 
     public interface Callback<T> {

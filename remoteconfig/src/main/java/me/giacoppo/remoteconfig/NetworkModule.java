@@ -43,7 +43,7 @@ class NetworkModule {
     }
 
     interface HttpCallback {
-        void onSuccess(@Nullable String value);
+        void onSuccess(@Nullable String response);
 
         void onError(Throwable t);
     }
