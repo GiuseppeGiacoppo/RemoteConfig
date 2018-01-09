@@ -52,6 +52,14 @@ RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
 1. To fetch an update configuration from a remote json, call the `fetch(String url, Callback callback)` method
 2. To set fetched configuration available to your app, call the `activateFetched()` method
 
+## Contributing
+
+1. Fork it!
+2. Create your feature branch: `git checkout -b my-new-feature`
+3. Commit your changes: `git commit -am 'Add some feature'`
+4. Push to the branch: `git push origin my-new-feature`
+5. Submit a pull request :D
+
 ## Credits and libraries
 RemoteConfig is an open source library inspired by [Firebase Remote Config](https://firebase.google.com/docs/remote-config)
 
