@@ -4,6 +4,8 @@
 
 RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download  each configuration and integrate them into the application.
 
+![Library Architecture](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/architecture.png)
+
 You can upload to your server many configurations (messages, flags, values and so on) in json files and the library will do all the work as fetching, storing them and making them available all over your app.
 
 
@@ -20,23 +22,25 @@ Grab via Maven:
 
 or Gradle:
 ```groovy
-api 'me.giacoppo:remoteconfig:LATEST_VERSION'
+implementation 'me.giacoppo:remoteconfig:LATEST_VERSION'
 ```
 
 ## Usage
 Retrieve a specific instance of RemoteResource for every configuration class
 ```java
 RemoteResource<AppConfig> remoteAppConfig = RemoteConfig.of(AppConfig.class);
+RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
 ```
-You're done. `remoteAppConfig` will have the most updated values of `AppConfig`
+You're done. `remoteAppConfig` and `remoteMessagesConfig` will have the last activated values for app and messages configurations.
 
-You will get an instance of `AppConfig` with a get() method:
+You will get an instance of a specific configuration with the `get()` method:
 ```java
 AppConfig appConfig = remoteAppConfig.get();
+String apiEndPoint = appConfig.getBaseUrl();
+...
 ```
 
-
-### Setup
+## Setup
 You can initialize RemoteConfig in your Application class including a single line of code. This has to be done once in your application lifecycle
 ```java
 RemoteConfig.initializeWithDefaults(this);
@@ -52,9 +56,28 @@ appConfig.setDefaultTimeout(10);
 RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
 ```
 ### Fetch config from network
-1. To fetch an updated configuration from a remote json, call the `fetch(String url, Callback callback)` method
+1. To fetch an updated configuration from a remote json, call the `fetch(Request, Callback)` method
 2. To set fetched configuration available to your app, call the `activateFetched()` method
 
+```java
+final RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
+RemoteConfig.Request fetchRequest = 
+        RemoteConfig.Request.newBuilder("http://your.configuration.url")
+                .setCacheExpiration(BuildConfig.DEBUG ? 0 : 3600000) //no network calls if last fetch was less than 1h ago
+                .build();
+
+remoteMessagesConfig.fetch(fetchRequest, new RemoteConfig.Callback() {
+    @Override
+    public void onSuccess() {
+        remoteMessagesConfig.activateFetched();
+    }
+
+    @Override
+    public void onError(Throwable t) {
+        
+    }
+});
+```
 ## Contributing
 
 1. Fork it!
