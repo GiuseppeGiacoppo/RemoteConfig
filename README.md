@@ -22,15 +22,15 @@ api 'me.giacoppo:remoteconfig:LATEST_VERSION'
 ```
 
 ## Usage
-Retrieve a specific instance of RemoteConfig for every configuration class
+Retrieve a specific instance of RemoteResource for every configuration class
 ```java
-RemoteConfig<AppConfig> remoteAppConfig = RemoteConfig.of(AppConfig.class);
+RemoteResource<AppConfig> remoteAppConfig = RemoteConfig.of(AppConfig.class);
 ```
 You're done. `remoteAppConfig` will have the most updated values of `AppConfig`
 
 You will get an instance of `AppConfig` with a get() method:
 ```java
-AppConfig appConfig = remoteAppConfig().get();
+AppConfig appConfig = remoteAppConfig.get();
 ```
 
 ### Setup
