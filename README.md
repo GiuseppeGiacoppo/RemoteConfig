@@ -1,8 +1,10 @@
 # RemoteConfig
 
-RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download  each configuration and integrate into the application.
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig/badge.svg)](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig)
 
-You can create many json files containing various configurations (messages, flags, values and so on), upload them to your server and the library will do all the work as fetching the configurations, store them and make them available all over your app.
+RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download  each configuration and integrate them into the application.
+
+You can upload to your server many configurations (messages, flags, values and so on) in json files and the library will do all the work as fetching, storing them and making them available all over your app.
 
 
 ## Download
@@ -33,6 +35,7 @@ You will get an instance of `AppConfig` with a get() method:
 AppConfig appConfig = remoteAppConfig.get();
 ```
 
+
 ### Setup
 You can initialize RemoteConfig in your Application class including a single line of code. This has to be done once in your application lifecycle
 ```java
@@ -49,7 +52,7 @@ appConfig.setDefaultTimeout(10);
 RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
 ```
 ### Fetch config from network
-1. To fetch an update configuration from a remote json, call the `fetch(String url, Callback callback)` method
+1. To fetch an updated configuration from a remote json, call the `fetch(String url, Callback callback)` method
 2. To set fetched configuration available to your app, call the `activateFetched()` method
 
 ## Contributing
