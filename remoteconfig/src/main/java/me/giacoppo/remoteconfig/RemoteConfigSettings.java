@@ -18,7 +18,7 @@ class RemoteConfigSettings<T> {
         return classOfConfig;
     }
 
-    static class Builder<T> {
+    public static class Builder<T> {
         private final Class<T> classOfConfig;
 
         private Builder(@NonNull Class<T> classOfConfig) {
