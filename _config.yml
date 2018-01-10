@@ -1,15 +1,11 @@
 # Setup
 title:        RemoteConfig | Android Library for your remote configurations
-baseurl:      "https://giuseppegiacoppo.github.io/RemoteConfig/"
+baseurl:      "/RemoteConfig"
 locale:       "it"
 
 # About/contact
 author:
   name:       Giuseppe Giacoppo
-
-# Gems
-gems:
-  - jekyll-paginate
 
 #Others
 markdown: kramdown
