@@ -8,6 +8,7 @@ RemoteConfig is an Android library that lets you manage all your remote configur
 
 You can upload to your server many configurations (messages, flags, values and so on) in json files and the library will do all the work as fetching, storing them and making them available all over your app.
 
+![Multiple Configurations](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/multiple_configurations.png)
 
 ## Download
 Grab via Maven:
