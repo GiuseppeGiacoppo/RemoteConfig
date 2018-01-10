@@ -14,7 +14,7 @@ public final class RemoteResource<T> {
     private final RemoteConfigRepository<T> repo;
     private final Class<T> classOfResource;
 
-    RemoteResource(Class<T> classOfResource, GetterModule<T> getter) {
+    RemoteResource(Class<T> classOfResource) {
         repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), classOfResource);
         this.classOfResource = classOfResource;
     }
