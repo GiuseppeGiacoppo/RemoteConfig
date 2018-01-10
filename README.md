@@ -1,4 +1,4 @@
-# RemoteConfig
+# Introduction
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig/badge.svg)](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig)
 
@@ -9,6 +9,9 @@ RemoteConfig is an Android library that lets you manage all your remote configur
 You can upload to your server many configurations (messages, flags, values and so on) in json files and the library will do all the work as fetching, storing them and making them available all over your app.
 
 ![Multiple Configurations](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/multiple_configurations.png)
+
+## Wiki
+A **complete and detailed** wiki is available [here](https://github.com/GiuseppeGiacoppo/RemoteConfig/wiki)
 
 ## Download
 Grab via Maven:
@@ -62,8 +65,8 @@ RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
 
 ```java
 final RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
-RemoteConfig.Request fetchRequest = 
-        RemoteConfig.Request.newBuilder("http://your.configuration.url")
+RemoteConfig.HttpRequest fetchRequest = 
+        RemoteConfig.HttpRequest.newBuilder("http://your.configuration.url")
                 .setCacheExpiration(BuildConfig.DEBUG ? 0 : 3600000) //no network calls if last fetch was less than 1h ago
                 .build();
 
