@@ -1,4 +1,6 @@
 # Setup
+theme: jekyll-theme-cayman
+
 title:        RemoteConfig | Android Library for your remote configurations
 baseurl:      "/RemoteConfig"
 locale:       "it"
@@ -6,6 +8,3 @@ locale:       "it"
 # About/contact
 author:
   name:       Giuseppe Giacoppo
-
-#Others
-markdown: kramdown
