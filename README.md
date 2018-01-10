@@ -1,5 +1,5 @@
 # Introduction
-[![Maven Central](https://img.shields.io/maven-central/v/me.giacoppo/remoteconfig.svg)](https://oss.sonatype.org/content/repositories/releases/me/giacoppo/remoteconfig/)
+[![Maven Central](https://img.shields.io/maven-central/v/me.giacoppo/remoteconfig.svg)](http://repo1.maven.org/maven2/me/giacoppo/remoteconfig/)
 [![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/https/oss.sonatype.org/me.giacoppo/remoteconfig.svg)](https://oss.sonatype.org/content/repositories/releases/me/giacoppo/remoteconfig/) 
 [![API](https://img.shields.io/badge/API-14%2B-green.svg?style=flat)](https://android-arsenal.com/api?level=14)
 
