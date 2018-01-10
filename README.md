@@ -1,6 +1,7 @@
 # Introduction
-
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig/badge.svg)](https://maven-badges.herokuapp.com/maven-central/me.giacoppo/remoteconfig)
+[![Maven Central](https://img.shields.io/maven-central/v/me.giacoppo/remoteconfig.svg)](https://oss.sonatype.org/content/repositories/releases/me/giacoppo/remoteconfig/)
+[![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/https/oss.sonatype.org/me.giacoppo/remoteconfig.svg)](https://oss.sonatype.org/content/repositories/releases/me/giacoppo/remoteconfig/) 
+[![API](https://img.shields.io/badge/API-14%2B-green.svg?style=flat)](https://android-arsenal.com/api?level=14)
 
 RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download  each configuration and integrate them into the application.
 
