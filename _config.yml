@@ -1,9 +1,9 @@
 # Setup
-title:        Project or Site name
+title:        RemoteConfig | Android Library for your remote configurations
 tagline:      A responsive theme for your project on GitHub Pages
-baseurl:      ""
+baseurl:      "https://giuseppegiacoppo.github.io/RemoteConfig/"
 paginate:     1
-locale:       "en"
+locale:       "it"
 
 # About/contact
 author:
