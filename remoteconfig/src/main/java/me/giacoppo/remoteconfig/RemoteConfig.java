@@ -3,6 +3,7 @@ package me.giacoppo.remoteconfig;
 import android.content.Context;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
 
 import java.lang.ref.WeakReference;
@@ -49,6 +50,19 @@ public final class RemoteConfig {
      */
     @NonNull
     public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig) {
+        return RemoteConfig.of(classOfConfig, null);
+    }
+
+    /**
+     * Get a new instance of Remote Resource
+     *
+     * @param classOfConfig class of config
+     * @param <T>           Generic representing the config object class
+     * @param getter Getter module
+     * @return an instance of a RemoteResource tht wraps a specific config class
+     */
+    @NonNull
+    public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig, @Nullable RemoteResource.GetterModule<T> getter) {
         Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
         Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
 
@@ -64,8 +78,7 @@ public final class RemoteConfig {
             }
         }
 
-        RemoteConfigSettings<T> settings = RemoteConfigSettings.newBuilder(classOfConfig).build();
-        remoteResource = new RemoteResource<>(settings);
+        remoteResource = new RemoteResource<>(classOfConfig, getter);
 
         if (Holder.lruCache != null) {
             Logger.log(Logger.DEBUG, key + " not cached. Adding now");
@@ -134,9 +147,9 @@ public final class RemoteConfig {
 
     public static class Request {
         private final Builder builder;
-        final String url;
-        final long cacheExpiration;
-        final Map<String, String> headers;
+        private final String url;
+        private final long cacheExpiration;
+        private final Map<String, String> headers;
 
         private Request(Builder builder) {
             this.builder = builder;
@@ -153,6 +166,18 @@ public final class RemoteConfig {
         @NonNull
         public Builder newBuilder() {
             return builder;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public long getCacheExpiration() {
+            return cacheExpiration;
+        }
+
+        public Map<String, String> getHeaders() {
+            return headers;
         }
 
         public static class Builder {

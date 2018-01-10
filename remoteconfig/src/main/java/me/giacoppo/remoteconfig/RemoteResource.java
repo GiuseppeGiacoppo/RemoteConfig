@@ -7,15 +7,21 @@ import android.support.annotation.Nullable;
 
 /**
  * Wrapper of remote configuration
+ *
  * @param <T>
  */
 public final class RemoteResource<T> {
-    private final RemoteConfigSettings<T> remoteConfigSettings;
     private final RemoteConfigRepository<T> repo;
+    private final GetterModule<T> getter;
 
-    RemoteResource(RemoteConfigSettings<T> remoteConfigSettings) {
-        this.remoteConfigSettings = remoteConfigSettings;
-        repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), remoteConfigSettings.getClassOfConfig());
+    RemoteResource(Class<T> classOfResource, GetterModule<T> getter) {
+        repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), classOfResource);
+
+        if (getter != null)
+            this.getter = getter;
+        else
+            //using default http getter
+            this.getter = new HttpGetResourceModule<>(classOfResource, repo);
     }
 
     /**
@@ -31,70 +37,35 @@ public final class RemoteResource<T> {
      * Fetch a config from a specific URL
      *
      * @param request  Config request
-     * @param callback callback
+     * @param callback Callback
      */
     public void fetch(@NonNull final RemoteConfig.Request request, @Nullable final RemoteConfig.Callback callback) {
-        Utilities.requireNonNull(request, RemoteConfigMessages.NOT_VALID_REQUEST);
-
-        if (request.cacheExpiration > 0) {
-            // avoid network call if fetched config is still valid
-            long lastFetchedTimestamp = repo.getLastFetchedTimestamp();
-            if (System.currentTimeMillis() - lastFetchedTimestamp < request.cacheExpiration) {
-                Logger.log(Logger.DEBUG, "Cached fetched config still valid");
-                // last fetched config is still valid
-                if (callback != null) {
-                    callback.onSuccess();
-                }
-
-                return;
-            }
-        }
-
-        NetworkModule.get(request.url, request.headers, new NetworkModule.HttpCallback() {
+        getter.find(request, new ResponseListener<T>() {
             @Override
-            public void onSuccess(@Nullable String value) {
-                if (value != null) {
-                    T config = Utilities.Json.from(value, remoteConfigSettings.getClassOfConfig());
-
-                    // update fetched config
-                    repo.setLastFetchedConfig(config);
-
-                    Logger.log(Logger.DEBUG, "Successfully fetched and stored config from " + request.url);
-
-                    if (callback != null)
-                        // notify on ui thread
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onSuccess();
-                            }
-                        });
-                } else {
-                    Logger.log(Logger.DEBUG, "Fetched value is null");
-                    if (callback != null)
-                        // notify on ui thread
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onError(new IllegalArgumentException("Fetched value is null"));
-                            }
-                        });
-                }
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                Logger.log(Logger.DEBUG, "Error fetching config from url " + request.url);
-                Logger.log(Logger.DEBUG, t.getMessage());
+            public void onSuccess(T config) {
+                // update fetched config
+                repo.setLastFetchedConfig(config);
 
                 if (callback != null)
                     // notify on ui thread
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
-                            callback.onError(t);
+                            callback.onSuccess();
                         }
                     });
+            }
+
+            @Override
+            public void onError(final Throwable t) {
+                // notify on ui thread
+                if (callback!= null)
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.onError(t);
+                    }
+                });
             }
         });
     }
@@ -123,4 +94,12 @@ public final class RemoteResource<T> {
         repo.clearConfig();
     }
 
+    public interface GetterModule<T> {
+        void find(RemoteConfig.Request request, ResponseListener<T> callback);
+    }
+
+    public interface ResponseListener<T> {
+        void onSuccess(T data);
+        void onError(Throwable t);
+    }
 }

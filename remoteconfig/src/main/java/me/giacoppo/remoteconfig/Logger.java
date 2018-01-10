@@ -6,7 +6,7 @@ import android.util.Log;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-final class Logger {
+public final class Logger {
     private int logLevel;
 
     private Logger() {
@@ -17,13 +17,13 @@ final class Logger {
         Holder.logger.logLevel = level;
     }
 
-    static void log(@Level int logLevel, String message) {
+    public static void log(@Level int logLevel, String message) {
         if (logLevel>=Holder.logger.logLevel)
             Log.d("RemoteConfig", message);
     }
 
-    static final int RELEASE = 0x0;
-    static final int DEBUG = 0x1;
+    public static final int RELEASE = 0x0;
+    public static final int DEBUG = 0x1;
 
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({DEBUG,RELEASE})

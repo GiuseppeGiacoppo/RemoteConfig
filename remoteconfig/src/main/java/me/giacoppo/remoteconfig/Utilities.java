@@ -5,7 +5,7 @@ import android.webkit.URLUtil;
 import com.google.gson.Gson;
 
 
-class Utilities {
+final class Utilities {
     static void requireNonNull(Object o) {
         requireNonNull(o, "Non-null required");
     }

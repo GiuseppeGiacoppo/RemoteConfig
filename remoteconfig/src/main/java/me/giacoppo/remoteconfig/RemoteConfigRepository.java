@@ -69,6 +69,10 @@ class RemoteConfigRepository<T> {
         return activeConfig;
     }
 
+    T getLastFetched() {
+        return get(LAST_FETCHED_CONFIG);
+    }
+
     private T get(@ConfigType String type) {
         String value = sharedPreferences.getString(type, null);
         if (value == null)
