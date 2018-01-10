@@ -1,14 +1,11 @@
 # Setup
 title:        RemoteConfig | Android Library for your remote configurations
-tagline:      A responsive theme for your project on GitHub Pages
 baseurl:      "https://giuseppegiacoppo.github.io/RemoteConfig/"
-paginate:     1
 locale:       "it"
 
 # About/contact
 author:
-  name:       Author name
-  url:        http://yourhomepage.com 
+  name:       Giuseppe Giacoppo
 
 # Gems
 gems:
