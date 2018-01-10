@@ -12,16 +12,11 @@ import android.support.annotation.Nullable;
  */
 public final class RemoteResource<T> {
     private final RemoteConfigRepository<T> repo;
-    private final GetterModule<T> getter;
+    private final Class<T> classOfResource;
 
     RemoteResource(Class<T> classOfResource, GetterModule<T> getter) {
         repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), classOfResource);
-
-        if (getter != null)
-            this.getter = getter;
-        else
-            //using default http getter
-            this.getter = new HttpGetResourceModule<>(classOfResource, repo);
+        this.classOfResource = classOfResource;
     }
 
     /**
@@ -34,13 +29,13 @@ public final class RemoteResource<T> {
     }
 
     /**
-     * Fetch a config from a specific URL
+     * Fetch a config using a custom Getter Module
      *
-     * @param request  Config request
+     * @param getter   Implemented GetterModule
      * @param callback Callback
      */
-    public void fetch(@NonNull final RemoteConfig.Request request, @Nullable final RemoteConfig.Callback callback) {
-        getter.find(request, new ResponseListener<T>() {
+    public void fetch(@NonNull final GetterModule<T> getter, @Nullable final RemoteConfig.Callback callback) {
+        getter.find(new ResponseListener<T>() {
             @Override
             public void onSuccess(T config) {
                 // update fetched config
@@ -59,15 +54,25 @@ public final class RemoteResource<T> {
             @Override
             public void onError(final Throwable t) {
                 // notify on ui thread
-                if (callback!= null)
-                new Handler(Looper.getMainLooper()).post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onError(t);
-                    }
-                });
+                if (callback != null)
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onError(t);
+                        }
+                    });
             }
         });
+    }
+
+    /**
+     * Fetch a config using a default Http Getter Module
+     * @param httpGetRequest Library Http Getter Module based on HttpRequest object
+     * @param callback Callback
+     */
+    public void fetch(@NonNull final RemoteConfig.HttpRequest httpGetRequest, @Nullable final RemoteConfig.Callback callback) {
+        GetterModule<T> getter = new HttpGetResourceModule<>(httpGetRequest, repo, classOfResource);
+        fetch(getter, callback);
     }
 
     /**
@@ -95,11 +100,12 @@ public final class RemoteResource<T> {
     }
 
     public interface GetterModule<T> {
-        void find(RemoteConfig.Request request, ResponseListener<T> callback);
+        void find(ResponseListener<T> callback);
     }
 
     public interface ResponseListener<T> {
         void onSuccess(T data);
+
         void onError(Throwable t);
     }
 }

@@ -2,17 +2,19 @@ package me.giacoppo.remoteconfig;
 
 import android.support.annotation.Nullable;
 
-public final class HttpGetResourceModule<T> implements RemoteResource.GetterModule<T> {
+final class HttpGetResourceModule<T> implements RemoteResource.GetterModule<T> {
     private final RemoteConfigRepository<T> repo;
-    private final Class<T> classOfConfig;
+    private final RemoteConfig.HttpRequest request;
+    private final Class<T> tClass;
 
-    HttpGetResourceModule(Class<T> classOfConfig, RemoteConfigRepository<T> repo) {
+    HttpGetResourceModule(RemoteConfig.HttpRequest request, RemoteConfigRepository<T> repo, Class<T> tClass) {
         this.repo = repo;
-        this.classOfConfig = classOfConfig;
+        this.request = request;
+        this.tClass = tClass;
     }
 
     @Override
-    public void find(final RemoteConfig.Request request, final RemoteResource.ResponseListener<T> listener) {
+    public void find(final RemoteResource.ResponseListener<T> listener) {
         Utilities.requireNonNull(request, RemoteConfigMessages.NOT_VALID_REQUEST);
         if (request.getCacheExpiration() > 0) {
             // avoid network call if fetched config is still valid
@@ -32,7 +34,7 @@ public final class HttpGetResourceModule<T> implements RemoteResource.GetterModu
             @Override
             public void onSuccess(@Nullable String value) {
                 if (value != null) {
-                    T config = Utilities.Json.from(value, classOfConfig);
+                    T config = Utilities.Json.from(value, tClass);
 
                     Logger.log(Logger.DEBUG, "Successfully fetched and stored config from " + request.getUrl());
 

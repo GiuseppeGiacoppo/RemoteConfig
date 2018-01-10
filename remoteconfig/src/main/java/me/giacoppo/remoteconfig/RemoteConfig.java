@@ -145,13 +145,13 @@ public final class RemoteConfig {
         }
     }
 
-    public static class Request {
+    public static class HttpRequest {
         private final Builder builder;
         private final String url;
         private final long cacheExpiration;
         private final Map<String, String> headers;
 
-        private Request(Builder builder) {
+        private HttpRequest(Builder builder) {
             this.builder = builder;
             this.url = builder.url;
             this.cacheExpiration = builder.cacheExpiration;
@@ -200,9 +200,9 @@ public final class RemoteConfig {
             }
 
             @NonNull
-            public Request build() {
+            public HttpRequest build() {
                 check();
-                return new Request(this);
+                return new HttpRequest(this);
             }
 
             private void check() {
