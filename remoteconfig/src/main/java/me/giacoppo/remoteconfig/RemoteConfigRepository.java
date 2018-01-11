@@ -9,24 +9,28 @@ import android.support.annotation.StringDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import me.giacoppo.remoteconfig.mapper.ConfigMapper;
+
 @SuppressWarnings("unused")
 @SuppressLint("ApplySharedPref")
 class RemoteConfigRepository<T> {
     private static final String FILENAME_PREFIX = "remote_config_";
     private final SharedPreferences sharedPreferences;
+    private final ConfigMapper<T> mapper;
     private final Class<T> classOfConfig;
     private T activeConfig;
 
-    private RemoteConfigRepository(Context context, Class<T> classOfConfig) {
+    private RemoteConfigRepository(Context context, ConfigMapper<T> mapper, Class<T> classOfConfig) {
         this.classOfConfig = classOfConfig;
+        this.mapper = mapper;
         sharedPreferences = context.getSharedPreferences(FILENAME_PREFIX + classOfConfig.getSimpleName().toLowerCase(), Context.MODE_PRIVATE);
     }
 
-    static <T> RemoteConfigRepository<T> create(Context context, Class<T> classType) {
+    static <T> RemoteConfigRepository<T> create(Context context, ConfigMapper<T> mapper, Class<T> classType) {
         Utilities.requireNonNull(context);
         Utilities.requireNonNull(classType);
 
-        return new RemoteConfigRepository<>(context, classType);
+        return new RemoteConfigRepository<>(context, mapper, classType);
     }
 
     void setDefaultConfig(T defaultValue) {
@@ -78,7 +82,7 @@ class RemoteConfigRepository<T> {
         if (value == null)
             return null;
 
-        return Utilities.Json.from(value, classOfConfig);
+        return mapper.fromString(value);
     }
 
     private long getTimestamp(@ConfigType String type) {
@@ -95,7 +99,7 @@ class RemoteConfigRepository<T> {
             editor.remove(type);
             editor.remove(type + TIMESTAMP_SUFFIX);
         } else {
-            editor.putString(type, Utilities.Json.to(value));
+            editor.putString(type, mapper.toString(value));
             editor.putLong(type + TIMESTAMP_SUFFIX, timestamp);
         }
 

@@ -5,6 +5,8 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import me.giacoppo.remoteconfig.mapper.ConfigMapper;
+
 /**
  * Wrapper of remote configuration
  *
@@ -14,8 +16,8 @@ public final class RemoteResource<T> {
     private final RemoteConfigRepository<T> repo;
     private final Class<T> classOfResource;
 
-    RemoteResource(Class<T> classOfResource) {
-        repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), classOfResource);
+    RemoteResource(Class<T> classOfResource, ConfigMapper<T> mapper) {
+        repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), mapper, classOfResource);
         this.classOfResource = classOfResource;
     }
 
@@ -34,7 +36,7 @@ public final class RemoteResource<T> {
      * @param getter   Implemented GetterModule
      * @param callback Callback
      */
-    public void fetch(@NonNull final GetterModule<T> getter, @Nullable final RemoteConfig.Callback callback) {
+    public void fetch(@NonNull final GetterModule<T> getter, @Nullable final Callback callback) {
         getter.find(new ResponseListener<T>() {
             @Override
             public void onSuccess(T config) {
@@ -67,10 +69,11 @@ public final class RemoteResource<T> {
 
     /**
      * Fetch a config using a default Http Getter Module
+     *
      * @param httpGetRequest Library Http Getter Module based on HttpRequest object
-     * @param callback Callback
+     * @param callback       Callback
      */
-    public void fetch(@NonNull final RemoteConfig.HttpRequest httpGetRequest, @Nullable final RemoteConfig.Callback callback) {
+    public void fetch(@NonNull final RemoteConfig.HttpRequest httpGetRequest, @Nullable final Callback callback) {
         GetterModule<T> getter = new HttpGetResourceModule<>(httpGetRequest, repo, classOfResource);
         fetch(getter, callback);
     }
@@ -101,6 +104,12 @@ public final class RemoteResource<T> {
 
     public interface GetterModule<T> {
         void find(ResponseListener<T> callback);
+    }
+
+    public interface Callback {
+        void onSuccess();
+
+        void onError(Throwable t);
     }
 
     public interface ResponseListener<T> {

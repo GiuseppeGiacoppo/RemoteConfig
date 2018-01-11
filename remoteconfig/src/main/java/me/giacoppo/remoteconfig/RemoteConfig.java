@@ -8,6 +8,8 @@ import android.support.v4.util.LruCache;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
+import me.giacoppo.remoteconfig.mapper.ConfigMapper;
+
 @SuppressWarnings({"WeakerAccess", "unused", "UnusedReturnValue"})
 public final class RemoteConfig {
     /**
@@ -51,6 +53,24 @@ public final class RemoteConfig {
     public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig) {
         Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
         Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
+        
+        ConfigMapper<T> mapper = new JsonConfigMapper<>(classOfConfig);
+        return RemoteConfig.of(classOfConfig, mapper);
+    }
+
+    /**
+     * Get a new instance of Remote Resource
+     *
+     * @param classOfConfig class of config
+     * @param <T>           Generic representing the config object class
+     * @param mapper        Convert config object to/from String
+     * @return an instance of a RemoteResource tht wraps a specific config class
+     */
+    @NonNull
+    public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig, ConfigMapper<T> mapper) {
+        Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
+        Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
+        Utilities.requireNonNull(mapper, RemoteConfigMessages.NOT_VALID_MAPPER);
 
         RemoteResource<T> remoteResource;
         final String key = classOfConfig.getSimpleName().toLowerCase();
@@ -64,7 +84,8 @@ public final class RemoteConfig {
             }
         }
 
-        remoteResource = new RemoteResource<>(classOfConfig);
+
+        remoteResource = new RemoteResource<>(classOfConfig, mapper);
 
         if (Holder.lruCache != null) {
             Logger.log(Logger.DEBUG, key + " not cached. Adding now");
@@ -208,8 +229,4 @@ public final class RemoteConfig {
         static LruCache<String, RemoteResource> lruCache;
     }
 
-    public interface Callback{
-        void onSuccess();
-        void onError(Throwable t);
-    }
 }
