@@ -7,7 +7,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
     buildTypes {
         release {
@@ -25,7 +25,8 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation  'com.squareup.okhttp3:okhttp:3.9.1'
 
-    implementation  "io.reactivex.rxjava2:rxjava:2.1.8"
+    implementation  'io.reactivex.rxjava2:rxjava:2.1.8'
+    implementation  'io.reactivex.rxjava2:rxandroid:2.0.1'
 }
 
 apply from: './publish.gradle'
