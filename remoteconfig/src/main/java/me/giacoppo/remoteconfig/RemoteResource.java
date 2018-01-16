@@ -1,11 +1,16 @@
 package me.giacoppo.remoteconfig;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import me.giacoppo.remoteconfig.mapper.ConfigMapper;
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableOnSubscribe;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
+import me.giacoppo.remoteconfig.core.CacheStrategy;
+import me.giacoppo.remoteconfig.core.ILocalRepository;
+import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
  * Wrapper of remote configuration
@@ -13,12 +18,14 @@ import me.giacoppo.remoteconfig.mapper.ConfigMapper;
  * @param <T>
  */
 public final class RemoteResource<T> {
-    private final RemoteConfigRepository<T> repo;
-    private final Class<T> classOfResource;
+    private ILocalRepository<T> internalRepository;
+    private IRemoteRepository<T> remoteRepository;
+    private CacheStrategy cacheStrategy;
 
-    RemoteResource(Class<T> classOfResource, ConfigMapper<T> mapper) {
-        repo = RemoteConfigRepository.create(RemoteConfig.Holder.context.get(), mapper, classOfResource);
-        this.classOfResource = classOfResource;
+    public void initialize(RemoteConfigSettings<T> settings) {
+        internalRepository = settings.getInternalRepository();
+        remoteRepository = settings.getRemoteRepository();
+        cacheStrategy = settings.getCacheStrategy();
     }
 
     /**
@@ -27,62 +34,45 @@ public final class RemoteResource<T> {
      * @param config config that will be stored as default value
      */
     public void setDefaultConfig(@NonNull T config) {
-        repo.setDefaultConfig(config);
+        checkInitialization();
+        internalRepository.storeDefault(config);
     }
 
-    /**
-     * Fetch a config using a custom Getter Module
-     *
-     * @param getter   Implemented GetterModule
-     * @param callback Callback
-     */
-    public void fetch(@NonNull final GetterModule<T> getter, @Nullable final Callback callback) {
-        getter.find(new ResponseListener<T>() {
-            @Override
-            public void onSuccess(T config) {
-                // update fetched config
-                repo.setLastFetchedConfig(config);
+    public Completable fetch() {
+        checkInitialization();
+        if (System.currentTimeMillis() - internalRepository.getFetchedTimestamp() < cacheStrategy.maxAge())
+            return Completable.complete();
 
-                if (callback != null)
-                    // notify on ui thread
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onSuccess();
-                        }
-                    });
-            }
-
+        return Completable.create(new CompletableOnSubscribe() {
             @Override
-            public void onError(final Throwable t) {
-                // notify on ui thread
-                if (callback != null)
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onError(t);
-                        }
-                    });
+            public void subscribe(final CompletableEmitter emitter) throws Exception {
+                remoteRepository.fetch().subscribe(new SingleObserver<T>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onSuccess(T t) {
+                        internalRepository.storeFetched(t, System.currentTimeMillis());
+                        emitter.onComplete();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        emitter.onError(e);
+                    }
+                });
             }
         });
-    }
-
-    /**
-     * Fetch a config using a default Http Getter Module
-     *
-     * @param httpGetRequest Library Http Getter Module based on HttpRequest object
-     * @param callback       Callback
-     */
-    public void fetch(@NonNull final RemoteConfig.HttpRequest httpGetRequest, @Nullable final Callback callback) {
-        GetterModule<T> getter = new HttpGetResourceModule<>(httpGetRequest, repo, classOfResource);
-        fetch(getter, callback);
     }
 
     /**
      * Activate last fetched config
      */
     public void activateFetched() {
-        repo.activateFetchedConfig();
+        checkInitialization();
+        internalRepository.activateConfig();
     }
 
     /**
@@ -92,29 +82,20 @@ public final class RemoteResource<T> {
      */
     @Nullable
     public T get() {
-        return repo.getActivated();
+        checkInitialization();
+        return internalRepository.getConfig();
     }
 
     /**
      * Clear default, fetched and activated config
      */
     public void clear() {
-        repo.clearConfig();
+        checkInitialization();
+        internalRepository.clear();
     }
 
-    public interface GetterModule<T> {
-        void find(ResponseListener<T> callback);
-    }
-
-    public interface Callback {
-        void onSuccess();
-
-        void onError(Throwable t);
-    }
-
-    public interface ResponseListener<T> {
-        void onSuccess(T data);
-
-        void onError(Throwable t);
+    private void checkInitialization() {
+        if (internalRepository == null || remoteRepository == null || cacheStrategy == null)
+            throw new IllegalStateException("Remote resource not initialized");
     }
 }

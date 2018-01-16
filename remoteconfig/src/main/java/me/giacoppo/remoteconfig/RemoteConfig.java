@@ -6,9 +6,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.util.LruCache;
 
 import java.lang.ref.WeakReference;
-import java.util.Map;
-
-import me.giacoppo.remoteconfig.mapper.ConfigMapper;
 
 @SuppressWarnings({"WeakerAccess", "unused", "UnusedReturnValue"})
 public final class RemoteConfig {
@@ -53,24 +50,6 @@ public final class RemoteConfig {
     public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig) {
         Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
         Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
-        
-        ConfigMapper<T> mapper = new JsonConfigMapper<>(classOfConfig);
-        return RemoteConfig.of(classOfConfig, mapper);
-    }
-
-    /**
-     * Get a new instance of Remote Resource
-     *
-     * @param classOfConfig class of config
-     * @param <T>           Generic representing the config object class
-     * @param mapper        Convert config object to/from String
-     * @return an instance of a RemoteResource tht wraps a specific config class
-     */
-    @NonNull
-    public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig, ConfigMapper<T> mapper) {
-        Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
-        Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
-        Utilities.requireNonNull(mapper, RemoteConfigMessages.NOT_VALID_MAPPER);
 
         RemoteResource<T> remoteResource;
         final String key = classOfConfig.getSimpleName().toLowerCase();
@@ -84,8 +63,7 @@ public final class RemoteConfig {
             }
         }
 
-
-        remoteResource = new RemoteResource<>(classOfConfig, mapper);
+        remoteResource = new RemoteResource<>();
 
         if (Holder.lruCache != null) {
             Logger.log(Logger.DEBUG, key + " not cached. Adding now");
@@ -152,79 +130,8 @@ public final class RemoteConfig {
         }
     }
 
-    public static class HttpRequest {
-        private final Builder builder;
-        private final String url;
-        private final long cacheExpiration;
-        private final Map<String, String> headers;
-
-        private HttpRequest(Builder builder) {
-            this.builder = builder;
-            this.url = builder.url;
-            this.cacheExpiration = builder.cacheExpiration;
-            this.headers = builder.headers;
-        }
-
-        @NonNull
-        public static Builder newBuilder(@NonNull String url) {
-            return new Builder(url);
-        }
-
-        @NonNull
-        public Builder newBuilder() {
-            return builder;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public long getCacheExpiration() {
-            return cacheExpiration;
-        }
-
-        public Map<String, String> getHeaders() {
-            return headers;
-        }
-
-        public static class Builder {
-            private String url;
-            private long cacheExpiration = Holder.baseRequestCacheIntervalInMillis; //default value
-            private Map<String, String> headers;
-
-            private Builder(String url) {
-                this.url = url;
-            }
-
-            public Builder setCacheExpiration(@IntRange(from = 0) long cacheExpiration) {
-                this.cacheExpiration = cacheExpiration;
-                return this;
-            }
-
-            public Builder setHeaders(Map<String, String> headers) {
-                this.headers = headers;
-                return this;
-            }
-
-            @NonNull
-            public HttpRequest build() {
-                check();
-                return new HttpRequest(this);
-            }
-
-            private void check() {
-                if (!Utilities.Network.isValidUrl(url))
-                    throw new IllegalArgumentException("Url is not valid");
-
-                if (cacheExpiration < 0)
-                    throw new IllegalArgumentException("Non-negative cache expiration required. Current value: " + cacheExpiration);
-            }
-        }
-    }
-
     final static class Holder {
         static WeakReference<Context> context;
-        static final long baseRequestCacheIntervalInMillis = 14400000; //4h
         static final int baseLRUCacheSize = 3;
         static LruCache<String, RemoteResource> lruCache;
     }

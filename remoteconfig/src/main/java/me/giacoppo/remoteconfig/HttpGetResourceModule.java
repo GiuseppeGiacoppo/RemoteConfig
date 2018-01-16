@@ -1,59 +1,50 @@
 package me.giacoppo.remoteconfig;
 
-import android.support.annotation.Nullable;
+import java.io.IOException;
 
-final class HttpGetResourceModule<T> implements RemoteResource.GetterModule<T> {
-    private final RemoteConfigRepository<T> repo;
-    private final RemoteConfig.HttpRequest request;
-    private final Class<T> tClass;
+import io.reactivex.Single;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
+import me.giacoppo.remoteconfig.core.IRemoteRepository;
+import me.giacoppo.remoteconfig.network.HttpException;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-    HttpGetResourceModule(RemoteConfig.HttpRequest request, RemoteConfigRepository<T> repo, Class<T> tClass) {
-        this.repo = repo;
-        this.request = request;
-        this.tClass = tClass;
+final class HttpGetResourceModule<T> implements IRemoteRepository<T> {
+    private final Class<T> classOfConfig;
+    private final String url;
+    private final OkHttpClient client;
+
+    public HttpGetResourceModule(Class<T> classOfConfig, String url, OkHttpClient client) {
+        this.classOfConfig = classOfConfig;
+        this.url = url;
+        this.client = client;
     }
 
     @Override
-    public void find(final RemoteResource.ResponseListener<T> listener) {
-        Utilities.requireNonNull(request, RemoteConfigMessages.NOT_VALID_REQUEST);
-        if (request.getCacheExpiration() > 0) {
-            // avoid network call if fetched config is still valid
-            long lastFetchedTimestamp = repo.getLastFetchedTimestamp();
-            if (System.currentTimeMillis() - lastFetchedTimestamp < request.getCacheExpiration()) {
-                Logger.log(Logger.DEBUG, "Cached fetched config still valid");
-                // last fetched config is still valid
-                if (listener != null) {
-                    listener.onSuccess(repo.getLastFetched());
-                }
-
-                return;
-            }
-        }
-
-        NetworkModule.get(request.getUrl(), request.getHeaders(), new NetworkModule.HttpCallback() {
+    public Single<T> fetch() {
+        return Single.create(new SingleOnSubscribe<T>() {
             @Override
-            public void onSuccess(@Nullable String value) {
-                if (value != null) {
-                    T config = Utilities.Json.from(value, tClass);
+            public void subscribe(final SingleEmitter<T> emitter) throws Exception {
+                client.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        emitter.onError(e);
+                    }
 
-                    Logger.log(Logger.DEBUG, "Successfully fetched and stored config from " + request.getUrl());
-
-                    if (listener != null)
-                        listener.onSuccess(config);
-                } else {
-                    Logger.log(Logger.DEBUG, "Fetched value is null");
-                    if (listener != null)
-                        listener.onError(new IllegalArgumentException("Fetched value is null"));
-                }
-            }
-
-            @Override
-            public void onError(final Throwable t) {
-                Logger.log(Logger.DEBUG, "Error fetching config from url " + request.getUrl());
-                Logger.log(Logger.DEBUG, t.getMessage());
-
-                if (listener != null)
-                    listener.onError(t);
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        if (!response.isSuccessful())
+                            emitter.onError(new HttpException(response.code(),response.message()));
+                        else {
+                            T fetched = Utilities.Json.from(response.body().string(),classOfConfig);
+                            emitter.onSuccess(fetched);
+                        }
+                    }
+                });
             }
         });
     }

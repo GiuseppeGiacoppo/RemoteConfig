@@ -1,42 +1,71 @@
 package me.giacoppo.remoteconfig;
 
-import android.support.annotation.NonNull;
+import me.giacoppo.remoteconfig.core.CacheStrategy;
+import me.giacoppo.remoteconfig.core.ILocalRepository;
+import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
  * Settings for Remote Config instance
  *
  * @param <T> class of Config
  */
-class RemoteConfigSettings<T> {
-    private final Class<T> classOfConfig;
-
-    private RemoteConfigSettings(Builder<T> builder) {
-        this.classOfConfig = builder.classOfConfig;
-    }
-
-    Class<T> getClassOfConfig() {
-        return classOfConfig;
-    }
+public class RemoteConfigSettings<T> {
+    private final Builder<T> builder;
+    private final ILocalRepository<T> internalRepository;
+    private final IRemoteRepository<T> remoteRepository;
+    private final CacheStrategy cacheStrategy;
 
     public static class Builder<T> {
-        private final Class<T> classOfConfig;
+        private ILocalRepository<T> internalRepository;
+        private IRemoteRepository<T> remoteRepository;
+        private CacheStrategy cacheStrategy;
 
-        private Builder(@NonNull Class<T> classOfConfig) {
-            this.classOfConfig = classOfConfig;
+        public Builder<T> setInternalRepository(ILocalRepository<T> internalRepository) {
+            this.internalRepository = internalRepository;
+            return this;
         }
 
-        @NonNull
+        public Builder<T> setRemoteRepository(IRemoteRepository<T> remoteRepository) {
+            this.remoteRepository = remoteRepository;
+            return this;
+        }
+
+        public Builder<T> setCacheStrategy(CacheStrategy cacheStrategy) {
+            this.cacheStrategy = cacheStrategy;
+            return this;
+        }
+
         public RemoteConfigSettings<T> build() {
-            check();
-            return new RemoteConfigSettings<T>(this);
-        }
+            Utilities.requireNonNull(internalRepository, "internal repository null");
+            Utilities.requireNonNull(remoteRepository, "remote repository null");
 
-        private void check() {
-            Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
+            if (cacheStrategy == null)
+                cacheStrategy = CacheStrategy.DEFAULT_STRATEGY;
+
+            return new RemoteConfigSettings<>(this);
         }
     }
 
-    static <T> Builder<T> newBuilder(@NonNull Class<T> classOfConfig) {
-        return new Builder<>(classOfConfig);
+    private RemoteConfigSettings(Builder<T> builder) {
+        this.builder = builder;
+        this.internalRepository = builder.internalRepository;
+        this.remoteRepository = builder.remoteRepository;
+        this.cacheStrategy = builder.cacheStrategy;
+    }
+
+    public Builder<T> newBuilder() {
+        return builder;
+    }
+
+    ILocalRepository<T> getInternalRepository() {
+        return internalRepository;
+    }
+
+    IRemoteRepository<T> getRemoteRepository() {
+        return remoteRepository;
+    }
+
+    CacheStrategy getCacheStrategy() {
+        return cacheStrategy;
     }
 }

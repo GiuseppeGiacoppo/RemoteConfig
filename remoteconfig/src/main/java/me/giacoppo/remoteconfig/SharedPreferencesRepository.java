@@ -9,52 +9,57 @@ import android.support.annotation.StringDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import me.giacoppo.remoteconfig.mapper.ConfigMapper;
+import me.giacoppo.remoteconfig.core.ILocalRepository;
 
 @SuppressWarnings("unused")
 @SuppressLint("ApplySharedPref")
-class RemoteConfigRepository<T> {
+class SharedPreferencesRepository<T> implements ILocalRepository<T> {
     private static final String FILENAME_PREFIX = "remote_config_";
     private final SharedPreferences sharedPreferences;
-    private final ConfigMapper<T> mapper;
     private final Class<T> classOfConfig;
     private T activeConfig;
 
-    private RemoteConfigRepository(Context context, ConfigMapper<T> mapper, Class<T> classOfConfig) {
+    private SharedPreferencesRepository(Context context, Class<T> classOfConfig) {
         this.classOfConfig = classOfConfig;
-        this.mapper = mapper;
         sharedPreferences = context.getSharedPreferences(FILENAME_PREFIX + classOfConfig.getSimpleName().toLowerCase(), Context.MODE_PRIVATE);
     }
 
-    static <T> RemoteConfigRepository<T> create(Context context, ConfigMapper<T> mapper, Class<T> classType) {
+    static <T> SharedPreferencesRepository<T> create(Context context, Class<T> classType) {
         Utilities.requireNonNull(context);
         Utilities.requireNonNull(classType);
 
-        return new RemoteConfigRepository<>(context, mapper, classType);
+        return new SharedPreferencesRepository<>(context, classType);
     }
 
-    void setDefaultConfig(T defaultValue) {
+    @Override
+    public void storeDefault(T defaultValue) {
         set(defaultValue, -1, DEFAULT_CONFIG);
-
-        //if no activated config exists, set default config as activated
         if (getTimestamp(LAST_ACTIVATED_CONFIG) == -1)
-            activateConfig(defaultValue, -1);
+            set(defaultValue, -1, LAST_ACTIVATED_CONFIG);
     }
 
-    void setLastFetchedConfig(T fetchedConfig) {
-        set(fetchedConfig, System.currentTimeMillis(), LAST_FETCHED_CONFIG);
+    @Override
+    public void storeFetched(T fetchedConfig, long timestamp) {
+        set(fetchedConfig, timestamp, LAST_FETCHED_CONFIG);
     }
 
-    void activateFetchedConfig() {
-        if (getTimestamp(LAST_FETCHED_CONFIG) != -1)
-            activateConfig(get(LAST_FETCHED_CONFIG), getTimestamp(LAST_FETCHED_CONFIG));
-        else
-            Logger.log(Logger.DEBUG, "No fetched config to activate");
+    @Override
+    public long getFetchedTimestamp() {
+        return getTimestamp(LAST_FETCHED_CONFIG);
     }
 
-    private void activateConfig(T config, long instant) {
-        set(config, instant, LAST_ACTIVATED_CONFIG);
-        invalidateInMemoryConfig();
+    @Override
+    public T getConfig() {
+        return get(LAST_ACTIVATED_CONFIG);
+    }
+
+    @Override
+    public void activateConfig() {
+        synchronized (this) {
+            if (activeConfig != null)
+                activeConfig = null;
+        }
+        set(get(LAST_FETCHED_CONFIG), System.currentTimeMillis(), LAST_ACTIVATED_CONFIG);
     }
 
     private void invalidateInMemoryConfig() {
@@ -63,18 +68,8 @@ class RemoteConfigRepository<T> {
         }
     }
 
-    T getActivated() {
-        if (activeConfig == null) {
-            synchronized (this) {
-                activeConfig = get(LAST_ACTIVATED_CONFIG);
-            }
-        }
-
-        return activeConfig;
-    }
-
-    T getLastFetched() {
-        return get(LAST_FETCHED_CONFIG);
+    private long getTimestamp(@ConfigType String type) {
+        return sharedPreferences.getLong(type, -1);
     }
 
     private T get(@ConfigType String type) {
@@ -82,15 +77,7 @@ class RemoteConfigRepository<T> {
         if (value == null)
             return null;
 
-        return mapper.fromString(value);
-    }
-
-    private long getTimestamp(@ConfigType String type) {
-        return sharedPreferences.getLong(type + TIMESTAMP_SUFFIX, -1);
-    }
-
-    long getLastFetchedTimestamp() {
-        return getTimestamp(LAST_FETCHED_CONFIG);
+        return Utilities.Json.from(type, classOfConfig);
     }
 
     private void set(@Nullable T value, long timestamp, @ConfigType String type) {
@@ -99,14 +86,15 @@ class RemoteConfigRepository<T> {
             editor.remove(type);
             editor.remove(type + TIMESTAMP_SUFFIX);
         } else {
-            editor.putString(type, mapper.toString(value));
+            editor.putString(type, Utilities.Json.to(value));
             editor.putLong(type + TIMESTAMP_SUFFIX, timestamp);
         }
 
         editor.commit();
     }
 
-    void clearConfig() {
+    @Override
+    public void clear() {
         invalidateInMemoryConfig();
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
