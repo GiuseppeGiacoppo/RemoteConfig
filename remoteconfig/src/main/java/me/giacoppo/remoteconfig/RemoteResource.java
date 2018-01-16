@@ -8,6 +8,7 @@ import io.reactivex.CompletableEmitter;
 import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableSingleObserver;
 import me.giacoppo.remoteconfig.core.CacheStrategy;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
 import me.giacoppo.remoteconfig.core.IRemoteRepository;
@@ -43,15 +44,11 @@ public final class RemoteResource<T> {
         if (System.currentTimeMillis() - internalRepository.getFetchedTimestamp() < cacheStrategy.maxAge())
             return Completable.complete();
 
+        final SingleRunner<T> runner = new SingleRunner<>();
         return Completable.create(new CompletableOnSubscribe() {
             @Override
             public void subscribe(final CompletableEmitter emitter) throws Exception {
-                remoteRepository.fetch().subscribe(new SingleObserver<T>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-
-                    }
-
+                runner.execute(remoteRepository.fetch()).subscribeWith(new DisposableSingleObserver<T>() {
                     @Override
                     public void onSuccess(T t) {
                         internalRepository.storeFetched(t, System.currentTimeMillis());
@@ -97,5 +94,17 @@ public final class RemoteResource<T> {
     private void checkInitialization() {
         if (internalRepository == null || remoteRepository == null || cacheStrategy == null)
             throw new IllegalStateException("Remote resource not initialized");
+    }
+
+    private class FetchObserver extends DisposableSingleObserver<T> {
+        @Override
+        public void onSuccess(T value) {
+            internalRepository.storeFetched(value, System.currentTimeMillis());
+        }
+
+        @Override
+        public void onError(Throwable e) {
+
+        }
     }
 }

@@ -13,12 +13,12 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-final class HttpGetResourceModule<T> implements IRemoteRepository<T> {
+final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
     private final Class<T> classOfConfig;
     private final String url;
     private final OkHttpClient client;
 
-    public HttpGetResourceModule(Class<T> classOfConfig, String url, OkHttpClient client) {
+    public HttpGETRemoteRepository(Class<T> classOfConfig, String url, OkHttpClient client) {
         this.classOfConfig = classOfConfig;
         this.url = url;
         this.client = client;

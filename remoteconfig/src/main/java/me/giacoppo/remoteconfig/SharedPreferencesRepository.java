@@ -3,6 +3,7 @@ package me.giacoppo.remoteconfig;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringDef;
 
@@ -13,22 +14,18 @@ import me.giacoppo.remoteconfig.core.ILocalRepository;
 
 @SuppressWarnings("unused")
 @SuppressLint("ApplySharedPref")
-class SharedPreferencesRepository<T> implements ILocalRepository<T> {
+public final class SharedPreferencesRepository<T> implements ILocalRepository<T> {
     private static final String FILENAME_PREFIX = "remote_config_";
     private final SharedPreferences sharedPreferences;
     private final Class<T> classOfConfig;
-    private T activeConfig;
 
     private SharedPreferencesRepository(Context context, Class<T> classOfConfig) {
-        this.classOfConfig = classOfConfig;
         sharedPreferences = context.getSharedPreferences(FILENAME_PREFIX + classOfConfig.getSimpleName().toLowerCase(), Context.MODE_PRIVATE);
+        this.classOfConfig = classOfConfig;
     }
 
-    static <T> SharedPreferencesRepository<T> create(Context context, Class<T> classType) {
-        Utilities.requireNonNull(context);
-        Utilities.requireNonNull(classType);
-
-        return new SharedPreferencesRepository<>(context, classType);
+    public static <T> SharedPreferencesRepository<T> create(@NonNull Context context, @NonNull Class<T> classOfConfig) {
+        return new SharedPreferencesRepository<>(context, classOfConfig);
     }
 
     @Override
@@ -55,17 +52,7 @@ class SharedPreferencesRepository<T> implements ILocalRepository<T> {
 
     @Override
     public void activateConfig() {
-        synchronized (this) {
-            if (activeConfig != null)
-                activeConfig = null;
-        }
-        set(get(LAST_FETCHED_CONFIG), System.currentTimeMillis(), LAST_ACTIVATED_CONFIG);
-    }
-
-    private void invalidateInMemoryConfig() {
-        synchronized (this) {
-            activeConfig = null;
-        }
+        set(get(LAST_FETCHED_CONFIG), getTimestamp(LAST_FETCHED_CONFIG), LAST_ACTIVATED_CONFIG);
     }
 
     private long getTimestamp(@ConfigType String type) {
@@ -95,8 +82,6 @@ class SharedPreferencesRepository<T> implements ILocalRepository<T> {
 
     @Override
     public void clear() {
-        invalidateInMemoryConfig();
-
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear().commit();
     }
