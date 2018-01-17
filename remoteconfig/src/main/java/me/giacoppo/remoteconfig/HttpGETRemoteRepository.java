@@ -20,7 +20,7 @@ public final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
     private final String url;
     private final OkHttpClient client;
 
-    public HttpGETRemoteRepository(Class<T> classOfConfig, String url) {
+    private HttpGETRemoteRepository(Class<T> classOfConfig, String url) {
         this.classOfConfig = classOfConfig;
         this.url = url;
         this.client = new OkHttpClient();
