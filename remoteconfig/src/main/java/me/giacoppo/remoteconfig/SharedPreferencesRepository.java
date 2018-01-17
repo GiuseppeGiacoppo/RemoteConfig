@@ -52,11 +52,12 @@ public final class SharedPreferencesRepository<T> implements ILocalRepository<T>
 
     @Override
     public void activateConfig() {
-        set(get(LAST_FETCHED_CONFIG), getTimestamp(LAST_FETCHED_CONFIG), LAST_ACTIVATED_CONFIG);
+        if (getTimestamp(LAST_FETCHED_CONFIG) > getTimestamp(LAST_ACTIVATED_CONFIG)) //avoid overriding default config
+            set(get(LAST_FETCHED_CONFIG), getTimestamp(LAST_FETCHED_CONFIG), LAST_ACTIVATED_CONFIG);
     }
 
     private long getTimestamp(@ConfigType String type) {
-        return sharedPreferences.getLong(type+TIMESTAMP_SUFFIX, -1);
+        return sharedPreferences.getLong(type + TIMESTAMP_SUFFIX, -1);
     }
 
     private T get(@ConfigType String type) {
