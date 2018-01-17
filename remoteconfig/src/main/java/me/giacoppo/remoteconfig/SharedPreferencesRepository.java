@@ -56,7 +56,7 @@ public final class SharedPreferencesRepository<T> implements ILocalRepository<T>
     }
 
     private long getTimestamp(@ConfigType String type) {
-        return sharedPreferences.getLong(type, -1);
+        return sharedPreferences.getLong(type+TIMESTAMP_SUFFIX, -1);
     }
 
     private T get(@ConfigType String type) {
@@ -64,7 +64,7 @@ public final class SharedPreferencesRepository<T> implements ILocalRepository<T>
         if (value == null)
             return null;
 
-        return Utilities.Json.from(type, classOfConfig);
+        return Utilities.Json.from(value, classOfConfig);
     }
 
     private void set(@Nullable T value, long timestamp, @ConfigType String type) {

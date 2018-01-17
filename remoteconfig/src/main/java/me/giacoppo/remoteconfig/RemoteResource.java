@@ -6,8 +6,7 @@ import android.support.annotation.Nullable;
 import io.reactivex.Completable;
 import io.reactivex.CompletableEmitter;
 import io.reactivex.CompletableOnSubscribe;
-import io.reactivex.SingleObserver;
-import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 import me.giacoppo.remoteconfig.core.CacheStrategy;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
@@ -39,13 +38,13 @@ public final class RemoteResource<T> {
         internalRepository.storeDefault(config);
     }
 
-    public Completable fetch() {
+    public FetchResult fetch() {
         checkInitialization();
         if (System.currentTimeMillis() - internalRepository.getFetchedTimestamp() < cacheStrategy.maxAge())
-            return Completable.complete();
+            return new FetchResult(Completable.complete());
 
         final SingleRunner<T> runner = new SingleRunner<>();
-        return Completable.create(new CompletableOnSubscribe() {
+        Completable c = Completable.create(new CompletableOnSubscribe() {
             @Override
             public void subscribe(final CompletableEmitter emitter) throws Exception {
                 runner.execute(remoteRepository.fetch()).subscribeWith(new DisposableSingleObserver<T>() {
@@ -62,6 +61,9 @@ public final class RemoteResource<T> {
                 });
             }
         });
+        FetchResult result = new FetchResult(c);
+
+        return result;
     }
 
     /**
@@ -96,15 +98,50 @@ public final class RemoteResource<T> {
             throw new IllegalStateException("Remote resource not initialized");
     }
 
-    private class FetchObserver extends DisposableSingleObserver<T> {
-        @Override
-        public void onSuccess(T value) {
-            internalRepository.storeFetched(value, System.currentTimeMillis());
+    public interface FetchSuccess {
+        void onSuccess();
+    }
+
+    public interface FetchError {
+        void onError(Throwable t);
+    }
+
+    public interface FetchResponse extends FetchSuccess, FetchError {
+    }
+
+    public class FetchResult {
+        private final Completable fetchCompletable;
+
+        private FetchResult(@NonNull Completable fetchCompletable) {
+            this.fetchCompletable = fetchCompletable;
         }
 
-        @Override
-        public void onError(Throwable e) {
+        public void onSuccessListener(final FetchSuccess success) {
+            onResponse(success, null);
+        }
 
+        public void onErrorListener(final FetchError error) {
+            onResponse(null, error);
+        }
+
+        public void onResponseListener(final FetchResponse response) {
+            onResponse(response, response);
+        }
+
+        private void onResponse(final FetchSuccess success, final FetchError error) {
+            fetchCompletable.subscribe(new DisposableCompletableObserver() {
+                @Override
+                public void onComplete() {
+                    if (success != null)
+                        success.onSuccess();
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    if (error != null)
+                        error.onError(e);
+                }
+            });
         }
     }
 }

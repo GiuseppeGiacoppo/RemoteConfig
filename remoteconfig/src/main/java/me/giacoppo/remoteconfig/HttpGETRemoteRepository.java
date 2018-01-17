@@ -1,5 +1,7 @@
 package me.giacoppo.remoteconfig;
 
+import android.support.annotation.NonNull;
+
 import java.io.IOException;
 
 import io.reactivex.Single;
@@ -13,15 +15,19 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
+public final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
     private final Class<T> classOfConfig;
     private final String url;
     private final OkHttpClient client;
 
-    public HttpGETRemoteRepository(Class<T> classOfConfig, String url, OkHttpClient client) {
+    public HttpGETRemoteRepository(Class<T> classOfConfig, String url) {
         this.classOfConfig = classOfConfig;
         this.url = url;
-        this.client = client;
+        this.client = new OkHttpClient();
+    }
+
+    public static <T> IRemoteRepository<T> create(@NonNull Class<T> classOfConfig, @NonNull String url) {
+        return new HttpGETRemoteRepository<>(classOfConfig,url);
     }
 
     @Override
