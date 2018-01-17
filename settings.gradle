@@ -1,1 +1,1 @@
-include ':remoteconfig'
+include ':remoteconfig', ':app'
