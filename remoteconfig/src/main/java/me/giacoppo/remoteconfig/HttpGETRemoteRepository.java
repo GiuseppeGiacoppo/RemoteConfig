@@ -27,6 +27,9 @@ public final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
     }
 
     public static <T> IRemoteRepository<T> create(@NonNull Class<T> classOfConfig, @NonNull String url) {
+        if (!Utilities.Network.isValidUrl(url))
+            throw new IllegalArgumentException("Url not valid: "+url);
+        
         return new HttpGETRemoteRepository<>(classOfConfig,url);
     }
 
