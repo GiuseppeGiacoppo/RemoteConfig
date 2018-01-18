@@ -13,34 +13,42 @@ import me.giacoppo.remoteconfig.core.ILocalRepository;
 import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
- * Wrapper of remote configuration
+ * a Remote resource is a container for remote configurations. You can configure remote repository
+ * for fetching the conf, local repository for storing it, set default conf, fetch and activate and much more.
  *
  * @param <T>
  */
 public final class RemoteResource<T> {
-    private ILocalRepository<T> internalRepository;
+    private ILocalRepository<T> localRepository;
     private IRemoteRepository<T> remoteRepository;
     private CacheStrategy cacheStrategy;
 
     public void initialize(RemoteConfigSettings<T> settings) {
-        internalRepository = settings.getInternalRepository();
+        localRepository = settings.getInternalRepository();
         remoteRepository = settings.getRemoteRepository();
         cacheStrategy = settings.getCacheStrategy();
     }
 
     /**
-     * Set a default value
+     * Set a default configuration. This conf will be stored in local repository and will be returned
+     * if no active conf is found.
      *
      * @param config config that will be stored as default value
      */
     public void setDefaultConfig(@NonNull T config) {
         checkInitialization();
-        internalRepository.storeDefault(config);
+        localRepository.storeDefault(config);
     }
 
+    /**
+     * Fetch the remote configuration and store it as fetched config.
+     * If a previous fetched config is present, the library will check the max age defined with {@link CacheStrategy}
+     *
+     * @return It's possible to subscribe to a {@link FetchSuccess}, {@link FetchError} or both {@link FetchResponse}
+     */
     public FetchResult fetch() {
         checkInitialization();
-        if (System.currentTimeMillis() - internalRepository.getFetchedTimestamp() < cacheStrategy.maxAge())
+        if (System.currentTimeMillis() - localRepository.getFetchedTimestamp() < cacheStrategy.maxAgeInMillis())
             return new FetchResult(Completable.complete());
 
         final SingleRunner<T> runner = new SingleRunner<>();
@@ -50,7 +58,7 @@ public final class RemoteResource<T> {
                 runner.execute(remoteRepository.fetch()).subscribeWith(new DisposableSingleObserver<T>() {
                     @Override
                     public void onSuccess(T t) {
-                        internalRepository.storeFetched(t, System.currentTimeMillis());
+                        localRepository.storeFetched(t, System.currentTimeMillis());
                         emitter.onComplete();
                     }
 
@@ -66,22 +74,22 @@ public final class RemoteResource<T> {
     }
 
     /**
-     * Activate last fetched config
+     * Activate last fetched config, if present. Otherwise does nothing
      */
     public void activateFetched() {
         checkInitialization();
-        internalRepository.activateConfig();
+        localRepository.activateConfig();
     }
 
     /**
-     * Returns last activated config, if present. Otherwise will return the default config, or null
+     * Return last activated config, if present. Otherwise will return the default config, or null
      *
      * @return last activated config, if present. Otherwise will return the default config, or null
      */
     @Nullable
     public T get() {
         checkInitialization();
-        return internalRepository.getConfig();
+        return localRepository.getConfig();
     }
 
     /**
@@ -89,12 +97,12 @@ public final class RemoteResource<T> {
      */
     public void clear() {
         checkInitialization();
-        internalRepository.clear();
+        localRepository.clear();
     }
 
     private void checkInitialization() {
-        if (internalRepository == null || remoteRepository == null || cacheStrategy == null)
-            throw new IllegalStateException("Remote resource not initialized");
+        if (localRepository == null || remoteRepository == null || cacheStrategy == null)
+            throw new IllegalStateException(RemoteConfigMessages.REMOTE_RESOURCE_NOT_INITIALIZED);
     }
 
     public interface FetchSuccess {
@@ -108,6 +116,9 @@ public final class RemoteResource<T> {
     public interface FetchResponse extends FetchSuccess, FetchError {
     }
 
+    /**
+     * Manages the result of the fetch operation and let add listeners
+     */
     public class FetchResult {
         private final Completable fetchCompletable;
 
@@ -115,15 +126,15 @@ public final class RemoteResource<T> {
             this.fetchCompletable = fetchCompletable;
         }
 
-        public void onSuccessListener(final FetchSuccess success) {
+        public void addSuccessListener(final FetchSuccess success) {
             onResponse(success, null);
         }
 
-        public void onErrorListener(final FetchError error) {
+        public void addErrorListener(final FetchError error) {
             onResponse(null, error);
         }
 
-        public void onResponseListener(final FetchResponse response) {
+        public void addResponseListener(final FetchResponse response) {
             onResponse(response, response);
         }
 

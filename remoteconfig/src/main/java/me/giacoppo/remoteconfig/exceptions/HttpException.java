@@ -2,6 +2,9 @@ package me.giacoppo.remoteconfig.exceptions;
 
 import java.io.IOException;
 
+/**
+ * Wraps the http code and server message in case of not successful response
+ */
 public final class HttpException extends IOException {
     private final int httpCode;
 

@@ -13,6 +13,13 @@ import java.lang.annotation.RetentionPolicy;
 import me.giacoppo.remoteconfig.Utilities;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
 
+/**
+ * Implementation of ILocalRepository based on Android Shared Preferences
+ *
+ * Configurations will be stored as json strings using Gson library.
+ *
+ * @param <T>
+ */
 @SuppressWarnings("unused")
 @SuppressLint("ApplySharedPref")
 public final class SharedPreferencesLocalRepository<T> implements ILocalRepository<T> {

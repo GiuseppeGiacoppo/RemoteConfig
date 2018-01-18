@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Toast.makeText(MainActivity.this, "Fetch", Toast.LENGTH_SHORT).show();
-                remoteResource.fetch().onResponseListener(new RemoteResource.FetchResponse() {
+                remoteResource.fetch().addResponseListener(new RemoteResource.FetchResponse() {
                     @Override
                     public void onError(Throwable t) {
                         Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
         fetchAndActivat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                remoteResource.fetch().onResponseListener(new RemoteResource.FetchResponse() {
+                remoteResource.fetch().addResponseListener(new RemoteResource.FetchResponse() {
                     @Override
                     public void onError(Throwable e) {
                         Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();

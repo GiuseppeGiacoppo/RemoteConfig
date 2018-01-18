@@ -7,6 +7,11 @@ import android.support.v4.util.LruCache;
 
 import java.lang.ref.WeakReference;
 
+/**
+ * RemoteConfig is an Android library that lets you manage all your remote configuration
+ * without requiring developers to manually download each configuration and integrate them
+ * into the Android application.
+ */
 @SuppressWarnings({"WeakerAccess", "unused", "UnusedReturnValue"})
 public final class RemoteConfig {
     private static final int LRU_CACHE_DEFAULT_SIZE = 2;
@@ -24,6 +29,7 @@ public final class RemoteConfig {
     /**
      * Init library with custom values
      *
+     * @see Initializer
      * @param initializer initializer for library
      */
     public static void initialize(@NonNull Initializer initializer) {
@@ -79,6 +85,12 @@ public final class RemoteConfig {
     }
 
     /* Inner classes*/
+
+    /**
+     * Initializer class lets you to customize the library behavior
+     *
+     * Developer Mode: enables internal logging to
+     */
     public static class Initializer {
         private final boolean developerMode;
         private final int lruCacheSize;

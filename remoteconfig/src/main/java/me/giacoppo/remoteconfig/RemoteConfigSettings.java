@@ -5,7 +5,10 @@ import me.giacoppo.remoteconfig.core.ILocalRepository;
 import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
- * Settings for Remote Config instance
+ * Settings for Remote Config instance.
+ * This class is used to set required components as {@link ILocalRepository} and {@link IRemoteRepository}
+ * or optional components as {@link CacheStrategy}
+ *
  *
  * @param <T> class of Config
  */
