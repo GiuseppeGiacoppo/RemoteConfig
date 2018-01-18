@@ -45,13 +45,25 @@ String apiEndPoint = appConfig.getBaseUrl();
 ...
 ```
 
-## Setup
+## Setup library
 You can initialize RemoteConfig in your Application class including a single line of code. This has to be done once in your application lifecycle
 ```java
 RemoteConfig.initializeWithDefaults(this);
 ```
 This will initialize the library with default values. See below for specific details
 
+### Initialize each remote resource
+Initialize each remote resource before using it specifying remote and local repository. Remote repository is used to fetch updated configuration, local is used to store it inside your application.
+You can create your own local and remote repository or use the default ones:
+```java
+RemoteConfig.of(MessagesConfig.class).initialize(
+        new RemoteConfigSettings.Builder<MessagesConfig>()
+                .setInternalRepository(SharedPreferencesLocalRepository.create(this, MessagesConfig.class))
+                .setRemoteRepository(HttpGETRemoteRepository.create(MessagesConfig.class, "REMOTE_JSON_URL"))
+                .setCacheStrategy(CacheStrategy.NO_CACHE)
+                .build()
+);
+```
 ### Set default values for each configuration
 You should set default values for each configuration, so that your app doesn't have to wait to fetch values at least once.
 ```java
@@ -61,39 +73,31 @@ appConfig.setDefaultTimeout(10);
 RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
 ```
 ### Fetch config from network
-1. To fetch an updated configuration from a remote json, call the `fetch(Request, Callback)` method
+1. To fetch an updated configuration from a remote json, call the `fetch()` method
 2. To set fetched configuration available to your app, call the `activateFetched()` method
 
 ```java
 final RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
-RemoteConfig.HttpRequest fetchRequest = 
-        RemoteConfig.HttpRequest.newBuilder("http://your.configuration.url")
-                .setCacheExpiration(BuildConfig.DEBUG ? 0 : 3600000) //no network calls if last fetch was less than 1h ago
-                .build();
-
-remoteMessagesConfig.fetch(fetchRequest, new RemoteConfig.Callback() {
-    @Override
-    public void onSuccess() {
-        remoteMessagesConfig.activateFetched();
-    }
-
-    @Override
-    public void onError(Throwable t) {
-        
-    }
-});
+remoteMessagesConfig.fetch().addSuccessListener(new RemoteResource.FetchSuccess() {
+                    @Override
+                    public void onSuccess() {
+                        remoteMessagesConfig.activateFetched();
+                    }
+                });
 ```
+
 ## Contributing
 
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin my-new-feature`
-5. Submit a pull request :D
+5. Submit a pull request :)
 
 ## Credits and libraries
 RemoteConfig is an open source library inspired by [Firebase Remote Config](https://firebase.google.com/docs/remote-config)
 
+* [RxJava](https://github.com/ReactiveX/RxJava) and [RxAndroid](https://github.com/ReactiveX/RxAndroid)
 * [Gson](https://github.com/google/gson)
 * [OkHttp](http://square.github.io/okhttp)
 
