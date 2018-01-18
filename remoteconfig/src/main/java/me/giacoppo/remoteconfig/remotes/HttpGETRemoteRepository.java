@@ -1,4 +1,4 @@
-package me.giacoppo.remoteconfig;
+package me.giacoppo.remoteconfig.remotes;
 
 import android.support.annotation.NonNull;
 
@@ -7,8 +7,9 @@ import java.io.IOException;
 import io.reactivex.Single;
 import io.reactivex.SingleEmitter;
 import io.reactivex.SingleOnSubscribe;
+import me.giacoppo.remoteconfig.Utilities;
 import me.giacoppo.remoteconfig.core.IRemoteRepository;
-import me.giacoppo.remoteconfig.network.HttpException;
+import me.giacoppo.remoteconfig.exceptions.HttpException;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;

@@ -9,6 +9,9 @@ import java.lang.ref.WeakReference;
 
 @SuppressWarnings({"WeakerAccess", "unused", "UnusedReturnValue"})
 public final class RemoteConfig {
+    private static final int LRU_CACHE_DEFAULT_SIZE = 2;
+    private WeakReference<Context> contextWR;
+    private LruCache<String, RemoteResource> lruCache;
     /**
      * Init library with default values
      *
@@ -27,17 +30,19 @@ public final class RemoteConfig {
         Utilities.requireNonNull(initializer, RemoteConfigMessages.NOT_VALID_INITIALIZER);
 
         if (initializer.context.getApplicationContext() != null)
-            Holder.context = new WeakReference<>(initializer.context.getApplicationContext());
+            Holder.INSTANCE.contextWR = new WeakReference<>(initializer.context.getApplicationContext());
         else
-            Holder.context = new WeakReference<>(initializer.context);
+            Holder.INSTANCE.contextWR = new WeakReference<>(initializer.context);
 
         if (initializer.lruCacheSize > 0)
-            Holder.lruCache = new LruCache<>(initializer.lruCacheSize);
+            Holder.INSTANCE.lruCache = new LruCache<>(initializer.lruCacheSize);
         //else don't use cache
 
         if (initializer.developerMode)
             Logger.setLogLevel(Logger.DEBUG);
     }
+
+    private RemoteConfig() {}
 
     /**
      * Get a new instance of Remote Resource
@@ -48,15 +53,15 @@ public final class RemoteConfig {
      */
     @NonNull
     public static <T> RemoteResource<T> of(@NonNull Class<T> classOfConfig) {
-        Utilities.requireNonNull(Holder.context, RemoteConfigMessages.NOT_INITIALIZED);
+        Utilities.requireNonNull(Holder.INSTANCE.contextWR, RemoteConfigMessages.NOT_INITIALIZED);
         Utilities.requireNonNull(classOfConfig, RemoteConfigMessages.NOT_VALID_CLASS);
 
         RemoteResource<T> remoteResource;
         final String key = classOfConfig.getSimpleName().toLowerCase();
 
-        if (Holder.lruCache != null) {
+        if (Holder.INSTANCE.lruCache != null) {
             //noinspection unchecked
-            remoteResource = (RemoteResource<T>) Holder.lruCache.get(key);
+            remoteResource = (RemoteResource<T>) Holder.INSTANCE.lruCache.get(key);
             if (remoteResource != null) {
                 Logger.log(Logger.DEBUG, key + " already in cache");
                 return remoteResource;
@@ -65,9 +70,9 @@ public final class RemoteConfig {
 
         remoteResource = new RemoteResource<>();
 
-        if (Holder.lruCache != null) {
+        if (Holder.INSTANCE.lruCache != null) {
             Logger.log(Logger.DEBUG, key + " not cached. Adding now");
-            Holder.lruCache.put(key, remoteResource);
+            Holder.INSTANCE.lruCache.put(key, remoteResource);
         }
 
         return remoteResource;
@@ -92,7 +97,7 @@ public final class RemoteConfig {
 
         public static class Builder {
             private boolean developerMode;
-            private int lruCacheSize = Holder.baseLRUCacheSize;
+            private int lruCacheSize = LRU_CACHE_DEFAULT_SIZE;
             private final Context context;
 
             private Builder(@NonNull Context context) {
@@ -125,15 +130,12 @@ public final class RemoteConfig {
                 Utilities.requireNonNull(context, "Non-null Context required.");
 
                 if (lruCacheSize < 0)
-                    throw new IllegalArgumentException("Non-negative LRUCache size required. Current value: " + lruCacheSize);
+                    throw new IllegalArgumentException(RemoteConfigMessages.NOT_VALID_CACHE_SIZE+" Current value: " + lruCacheSize);
             }
         }
     }
 
-    final static class Holder {
-        static WeakReference<Context> context;
-        static final int baseLRUCacheSize = 3;
-        static LruCache<String, RemoteResource> lruCache;
+    private final static class Holder {
+        private static final RemoteConfig INSTANCE = new RemoteConfig();
     }
-
 }

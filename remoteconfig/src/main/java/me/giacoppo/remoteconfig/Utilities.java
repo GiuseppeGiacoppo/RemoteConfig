@@ -5,7 +5,7 @@ import android.webkit.URLUtil;
 import com.google.gson.Gson;
 
 
-final class Utilities {
+public final class Utilities {
     static void requireNonNull(Object o) {
         requireNonNull(o, "Non-null required");
     }
@@ -15,18 +15,18 @@ final class Utilities {
             throw new IllegalArgumentException(message);
     }
 
-    static class Network {
-        static boolean isValidUrl(String url) {
+    public static class Network {
+        public static boolean isValidUrl(String url) {
             return URLUtil.isValidUrl(url);
         }
     }
 
-    static class Json {
-        static <T> T from(String json, Class<T> c) {
+    public static class Json {
+        public static <T> T from(String json, Class<T> c) {
             return Holder.INSTANCE.fromJson(json, c);
         }
 
-        static String to(Object o) {
+        public static String to(Object o) {
             return Holder.INSTANCE.toJson(o);
         }
 

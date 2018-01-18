@@ -1,4 +1,4 @@
-package me.giacoppo.remoteconfig.network;
+package me.giacoppo.remoteconfig.exceptions;
 
 import java.io.IOException;
 

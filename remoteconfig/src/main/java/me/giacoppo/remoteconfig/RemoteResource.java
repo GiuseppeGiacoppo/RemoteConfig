@@ -61,9 +61,8 @@ public final class RemoteResource<T> {
                 });
             }
         });
-        FetchResult result = new FetchResult(c);
 
-        return result;
+        return  new FetchResult(c);
     }
 
     /**

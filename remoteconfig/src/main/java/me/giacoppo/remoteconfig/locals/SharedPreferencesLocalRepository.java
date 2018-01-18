@@ -1,4 +1,4 @@
-package me.giacoppo.remoteconfig;
+package me.giacoppo.remoteconfig.locals;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,22 +10,23 @@ import android.support.annotation.StringDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+import me.giacoppo.remoteconfig.Utilities;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
 
 @SuppressWarnings("unused")
 @SuppressLint("ApplySharedPref")
-public final class SharedPreferencesRepository<T> implements ILocalRepository<T> {
+public final class SharedPreferencesLocalRepository<T> implements ILocalRepository<T> {
     private static final String FILENAME_PREFIX = "remote_config_";
     private final SharedPreferences sharedPreferences;
     private final Class<T> classOfConfig;
 
-    private SharedPreferencesRepository(Context context, Class<T> classOfConfig) {
+    private SharedPreferencesLocalRepository(Context context, Class<T> classOfConfig) {
         sharedPreferences = context.getSharedPreferences(FILENAME_PREFIX + classOfConfig.getSimpleName().toLowerCase(), Context.MODE_PRIVATE);
         this.classOfConfig = classOfConfig;
     }
 
-    public static <T> SharedPreferencesRepository<T> create(@NonNull Context context, @NonNull Class<T> classOfConfig) {
-        return new SharedPreferencesRepository<>(context, classOfConfig);
+    public static <T> SharedPreferencesLocalRepository<T> create(@NonNull Context context, @NonNull Class<T> classOfConfig) {
+        return new SharedPreferencesLocalRepository<>(context, classOfConfig);
     }
 
     @Override
