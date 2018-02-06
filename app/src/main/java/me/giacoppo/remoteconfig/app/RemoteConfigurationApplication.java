@@ -2,6 +2,7 @@ package me.giacoppo.remoteconfig.app;
 
 import android.app.Application;
 
+import me.giacoppo.remoteconfig.locals.MigrationConflict;
 import me.giacoppo.remoteconfig.remotes.HttpGETRemoteRepository;
 import me.giacoppo.remoteconfig.RemoteConfig;
 import me.giacoppo.remoteconfig.RemoteConfigSettings;
@@ -22,7 +23,7 @@ public class RemoteConfigurationApplication extends Application {
 
         RemoteConfig.of(MessagesConfig.class).initialize(
                 new RemoteConfigSettings.Builder<MessagesConfig>()
-                        .setInternalRepository(SharedPreferencesLocalRepository.create(this, MessagesConfig.class))
+                        .setInternalRepository(SharedPreferencesLocalRepository.create(this, MessagesConfig.class, MigrationConflict.MERGE_WITH_DEFAULT))
                         .setRemoteRepository(HttpGETRemoteRepository.create(MessagesConfig.class, "http://demo0672984.mockable.io/messages.json"))
                         .setCacheStrategy(CacheStrategy.NO_CACHE)
                         .build()
