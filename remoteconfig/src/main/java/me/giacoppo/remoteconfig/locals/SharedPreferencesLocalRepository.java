@@ -9,13 +9,14 @@ import android.support.annotation.StringDef;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.logging.Logger;
 
 import me.giacoppo.remoteconfig.Utilities;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
 
 /**
  * Implementation of ILocalRepository based on Android Shared Preferences
- *
+ * <p>
  * Configurations will be stored as json strings using Gson library.
  *
  * @param <T>
@@ -26,14 +27,20 @@ public final class SharedPreferencesLocalRepository<T> implements ILocalReposito
     private static final String FILENAME_PREFIX = "remote_config_";
     private final SharedPreferences sharedPreferences;
     private final Class<T> classOfConfig;
+    private final MigrationConflict strategy;
 
-    private SharedPreferencesLocalRepository(Context context, Class<T> classOfConfig) {
+    private SharedPreferencesLocalRepository(Context context, Class<T> classOfConfig, MigrationConflict strategy) {
         sharedPreferences = context.getSharedPreferences(FILENAME_PREFIX + classOfConfig.getSimpleName().toLowerCase(), Context.MODE_PRIVATE);
         this.classOfConfig = classOfConfig;
+        this.strategy = strategy;
     }
 
     public static <T> SharedPreferencesLocalRepository<T> create(@NonNull Context context, @NonNull Class<T> classOfConfig) {
-        return new SharedPreferencesLocalRepository<>(context, classOfConfig);
+        return create(context, classOfConfig, MigrationConflict.IGNORE);
+    }
+
+    public static <T> SharedPreferencesLocalRepository<T> create(@NonNull Context context, @NonNull Class<T> classOfConfig, @NonNull MigrationConflict strategy) {
+        return new SharedPreferencesLocalRepository<>(context, classOfConfig, strategy);
     }
 
     @Override
@@ -41,6 +48,9 @@ public final class SharedPreferencesLocalRepository<T> implements ILocalReposito
         set(defaultValue, -1, DEFAULT_CONFIG);
         if (getTimestamp(LAST_ACTIVATED_CONFIG) == -1)
             set(defaultValue, -1, LAST_ACTIVATED_CONFIG);
+        else {
+            manageConflicts();
+        }
     }
 
     @Override
@@ -62,6 +72,25 @@ public final class SharedPreferencesLocalRepository<T> implements ILocalReposito
     public void activateConfig() {
         if (getTimestamp(LAST_FETCHED_CONFIG) > getTimestamp(LAST_ACTIVATED_CONFIG)) //avoid overriding default config
             set(get(LAST_FETCHED_CONFIG), getTimestamp(LAST_FETCHED_CONFIG), LAST_ACTIVATED_CONFIG);
+    }
+
+    private void manageConflicts() {
+        switch (strategy.getStrategy()) {
+            case MigrationConflict.ACTIVATED_ONLY:
+                return;
+
+            case MigrationConflict.MERGE:
+                String defaultConfig = sharedPreferences.getString(DEFAULT_CONFIG, null); //shouldn't be null because just set in storeDefault method
+                String activatedConfig = sharedPreferences.getString(LAST_ACTIVATED_CONFIG, null); //shouldn't be null because activated timestamp isn't -1
+
+                String newActivatedConfig = Utilities.Json.merge(defaultConfig,activatedConfig);
+
+                sharedPreferences.edit().putString(newActivatedConfig, LAST_ACTIVATED_CONFIG).commit();
+                return;
+
+            default:
+                return;
+        }
     }
 
     private long getTimestamp(@ConfigType String type) {
