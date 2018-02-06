@@ -10,7 +10,7 @@ ext {
     libraryName = 'RemoteConfig'
     artifact = 'remoteconfig'
 
-    libraryDescription = 'Remote Config desc'
+    libraryDescription = 'RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download each configuration and integrate them into the application.'
 
     siteUrl = 'https://github.com/GiuseppeGiacoppo/RemoteConfig'
     gitUrl = 'https://github.com/GiuseppeGiacoppo/RemoteConfig.git'
