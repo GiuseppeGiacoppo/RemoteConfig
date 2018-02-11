@@ -3,20 +3,15 @@ package me.giacoppo.remoteconfig.remotes;
 import android.support.annotation.NonNull;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
-import io.reactivex.Single;
-import io.reactivex.SingleEmitter;
-import io.reactivex.SingleOnSubscribe;
 import me.giacoppo.remoteconfig.Utilities;
-import me.giacoppo.remoteconfig.core.IRemoteRepository;
 import me.giacoppo.remoteconfig.exceptions.HttpException;
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
+public final class HttpGETRemoteRepository<T> implements Callable<T> {
     private final Class<T> classOfConfig;
     private final String url;
     private final OkHttpClient client;
@@ -27,35 +22,22 @@ public final class HttpGETRemoteRepository<T> implements IRemoteRepository<T> {
         this.client = new OkHttpClient();
     }
 
-    public static <T> IRemoteRepository<T> create(@NonNull Class<T> classOfConfig, @NonNull String url) {
+    public static <T> Callable<T> create(@NonNull Class<T> classOfConfig, @NonNull String url) {
         if (!Utilities.Network.isValidUrl(url))
-            throw new IllegalArgumentException("Url not valid: "+url);
-        
-        return new HttpGETRemoteRepository<>(classOfConfig,url);
+            throw new IllegalArgumentException("Url not valid: " + url);
+
+        return new HttpGETRemoteRepository<>(classOfConfig, url);
     }
 
     @Override
-    public Single<T> fetch() {
-        return Single.create(new SingleOnSubscribe<T>() {
-            @Override
-            public void subscribe(final SingleEmitter<T> emitter) throws Exception {
-                client.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
-                    @Override
-                    public void onFailure(Call call, IOException e) {
-                        emitter.onError(e);
-                    }
+    public T call() throws IOException {
+        Request r = new Request.Builder().url(url).build();
+        Response response = client.newCall(r).execute();
 
-                    @Override
-                    public void onResponse(Call call, Response response) throws IOException {
-                        if (!response.isSuccessful())
-                            emitter.onError(new HttpException(response.code(),response.message()));
-                        else {
-                            T fetched = Utilities.Json.from(response.body().string(),classOfConfig);
-                            emitter.onSuccess(fetched);
-                        }
-                    }
-                });
-            }
-        });
+        if (!response.isSuccessful())
+            throw new HttpException(response.code(), response.message());
+        else {
+            return Utilities.Json.from(response.body().string(), classOfConfig);
+        }
     }
 }
