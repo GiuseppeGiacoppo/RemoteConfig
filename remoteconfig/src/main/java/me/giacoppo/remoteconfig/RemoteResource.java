@@ -3,6 +3,8 @@ package me.giacoppo.remoteconfig;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.util.concurrent.Callable;
+
 import io.reactivex.Completable;
 import io.reactivex.CompletableEmitter;
 import io.reactivex.CompletableOnSubscribe;
@@ -10,7 +12,6 @@ import io.reactivex.observers.DisposableCompletableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 import me.giacoppo.remoteconfig.core.CacheStrategy;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
-import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
  * a Remote resource is a container for remote configurations. You can configure remote repository
@@ -20,7 +21,7 @@ import me.giacoppo.remoteconfig.core.IRemoteRepository;
  */
 public final class RemoteResource<T> {
     private ILocalRepository<T> localRepository;
-    private IRemoteRepository<T> remoteRepository;
+    private Callable<T> remoteRepository;
     private CacheStrategy cacheStrategy;
 
     public void initialize(RemoteConfigSettings<T> settings) {
@@ -51,11 +52,11 @@ public final class RemoteResource<T> {
         if (System.currentTimeMillis() - localRepository.getFetchedTimestamp() < cacheStrategy.maxAgeInMillis())
             return new FetchResult(Completable.complete());
 
-        final SingleRunner<T> runner = new SingleRunner<>();
+        final SingleExecutor<T> runner = new SingleExecutor<>();
         Completable c = Completable.create(new CompletableOnSubscribe() {
             @Override
             public void subscribe(final CompletableEmitter emitter) throws Exception {
-                runner.execute(remoteRepository.fetch()).subscribeWith(new DisposableSingleObserver<T>() {
+                runner.execute(remoteRepository).subscribeWith(new DisposableSingleObserver<T>() {
                     @Override
                     public void onSuccess(T t) {
                         localRepository.storeFetched(t, System.currentTimeMillis());
