@@ -1,26 +1,26 @@
 package me.giacoppo.remoteconfig;
 
+import java.util.concurrent.Callable;
+
 import me.giacoppo.remoteconfig.core.CacheStrategy;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
-import me.giacoppo.remoteconfig.core.IRemoteRepository;
 
 /**
  * Settings for Remote Config instance.
- * This class is used to set required components as {@link ILocalRepository} and {@link IRemoteRepository}
+ * This class is used to set required components as Local Repository {@link ILocalRepository} and Remote Repository {@link Callable}
  * or optional components as {@link CacheStrategy}
- *
  *
  * @param <T> class of Config
  */
 public class RemoteConfigSettings<T> {
     private final Builder<T> builder;
     private final ILocalRepository<T> internalRepository;
-    private final IRemoteRepository<T> remoteRepository;
+    private final Callable<T> remoteRepository;
     private final CacheStrategy cacheStrategy;
 
     public static class Builder<T> {
         private ILocalRepository<T> internalRepository;
-        private IRemoteRepository<T> remoteRepository;
+        private Callable<T> remoteRepository;
         private CacheStrategy cacheStrategy;
 
         public Builder<T> setInternalRepository(ILocalRepository<T> internalRepository) {
@@ -28,7 +28,7 @@ public class RemoteConfigSettings<T> {
             return this;
         }
 
-        public Builder<T> setRemoteRepository(IRemoteRepository<T> remoteRepository) {
+        public Builder<T> setRemoteRepository(Callable<T> remoteRepository) {
             this.remoteRepository = remoteRepository;
             return this;
         }
@@ -64,7 +64,7 @@ public class RemoteConfigSettings<T> {
         return internalRepository;
     }
 
-    IRemoteRepository<T> getRemoteRepository() {
+    Callable<T> getRemoteRepository() {
         return remoteRepository;
     }
 
