@@ -15,17 +15,7 @@ You can upload to your server many configurations (messages, flags, values and s
 A **complete and detailed** wiki is available [here](https://github.com/GiuseppeGiacoppo/RemoteConfig/wiki)
 
 ## Download
-Grab via Maven:
-```xml
-<dependency>
-  <groupId>me.giacoppo</groupId>
-  <artifactId>remoteconfig</artifactId>
-  <version>LATEST_VERSION</version>
-  <type>pom</type>
-</dependency>
-```
-
-or Gradle:
+Grab via Gradle:
 ```groovy
 implementation 'me.giacoppo:remoteconfig:LATEST_VERSION'
 ```
