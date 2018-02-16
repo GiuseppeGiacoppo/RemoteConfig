@@ -68,5 +68,18 @@ public class UtilitiesTest {
 
         System.out.println("Result: "+ mergedGeneratedObj.toString());
         assertTrue(!mergedRightObj.equals(mergedGeneratedObj));
+
+        //test merge complex objs
+        System.out.println("Test merge complex objs");
+        defaultJson = "{\"k1\":\"k1\",\"k2\":{\"subk1\":\"subk1\",\"subk2\":\"subk2\"}}";
+        activatedJson = "{\"k1\":\"k1\",\"k2\":{\"subk1\":\"subk1\"}}";
+
+        mergedJson = "{\"k1\":\"k1\",\"k2\":{\"subk1\":\"subk1\",\"subk2\":\"subk2\"}}";
+
+        mergedRightObj = Utilities.Json.from(mergedJson, JsonObject.class);
+        mergedGeneratedObj = Utilities.Json.from(Utilities.Json.merge(defaultJson,activatedJson),JsonObject.class);
+
+        System.out.println("Result: "+ mergedGeneratedObj.toString());
+        assertTrue(mergedRightObj.equals(mergedGeneratedObj));
     }
 }
