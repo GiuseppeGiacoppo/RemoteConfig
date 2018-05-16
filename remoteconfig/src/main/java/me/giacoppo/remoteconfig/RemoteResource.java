@@ -6,10 +6,7 @@ import android.support.annotation.Nullable;
 import java.util.concurrent.Callable;
 
 import io.reactivex.Completable;
-import io.reactivex.CompletableEmitter;
-import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.observers.DisposableCompletableObserver;
-import io.reactivex.observers.DisposableSingleObserver;
 import me.giacoppo.remoteconfig.core.CacheStrategy;
 import me.giacoppo.remoteconfig.core.ILocalRepository;
 
@@ -53,22 +50,9 @@ public final class RemoteResource<T> {
             return new FetchResult(Completable.complete());
 
         final SingleExecutor<T> runner = new SingleExecutor<>();
-        Completable c = Completable.create(new CompletableOnSubscribe() {
-            @Override
-            public void subscribe(final CompletableEmitter emitter) throws Exception {
-                runner.execute(remoteRepository).subscribeWith(new DisposableSingleObserver<T>() {
-                    @Override
-                    public void onSuccess(T t) {
-                        localRepository.storeFetched(t, System.currentTimeMillis());
-                        emitter.onComplete();
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        emitter.onError(e);
-                    }
-                });
-            }
+        Completable c = runner.execute(remoteRepository).flatMapCompletable(t -> {
+            localRepository.storeFetched(t, System.currentTimeMillis());
+            return Completable.complete();
         });
 
         return  new FetchResult(c);
@@ -124,7 +108,18 @@ public final class RemoteResource<T> {
         private final Completable fetchCompletable;
 
         private FetchResult(@NonNull Completable fetchCompletable) {
-            this.fetchCompletable = fetchCompletable;
+            this.fetchCompletable = fetchCompletable.cache();
+            this.fetchCompletable.subscribe(new DisposableCompletableObserver() {
+                @Override
+                public void onComplete() {
+                    Logger.log(Logger.DEBUG, "Fetch complete");
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Logger.log(Logger.DEBUG, "Fetch failed with exception: "+e.getMessage());
+                }
+            });
         }
 
         public void addSuccessListener(final FetchSuccess success) {

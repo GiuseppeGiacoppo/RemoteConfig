@@ -26,79 +26,50 @@ public class MainActivity extends AppCompatActivity {
         final TextView hello = findViewById(R.id.hello);
         final RemoteResource<MessagesConfig> remoteResource = RemoteConfig.of(MessagesConfig.class);
 
-        fetch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(MainActivity.this, "Fetch", Toast.LENGTH_SHORT).show();
-                remoteResource.fetch().addResponseListener(new RemoteResource.FetchResponse() {
-                    @Override
-                    public void onError(Throwable t) {
-                        Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onSuccess() {
-                        Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
+        fetch.setOnClickListener(view -> {
+            Toast.makeText(MainActivity.this, "Fetch", Toast.LENGTH_SHORT).show();
+            remoteResource.fetch();
         });
 
-        activate.setOnClickListener(new View.OnClickListener() {
+        activate.setOnClickListener(view -> {
+            remoteResource.activateFetched();
+            Toast.makeText(MainActivity.this, "Activated", Toast.LENGTH_SHORT).show();
+        });
+
+        fetchAndActivat.setOnClickListener(view -> remoteResource.fetch().addResponseListener(new RemoteResource.FetchResponse() {
             @Override
-            public void onClick(View view) {
+            public void onError(Throwable e) {
+                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onSuccess() {
+                Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
                 remoteResource.activateFetched();
-                Toast.makeText(MainActivity.this, "Activated", Toast.LENGTH_SHORT).show();
             }
+        }));
+
+        setDefault.setOnClickListener(view -> {
+            MessagesConfig defaultMessages = new MessagesConfig();
+            defaultMessages.setWelcomeMessage("Hello di default");
+            remoteResource.setDefaultConfig(defaultMessages);
+
+            Toast.makeText(MainActivity.this, "Default config set", Toast.LENGTH_SHORT).show();
         });
 
-        fetchAndActivat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                remoteResource.fetch().addResponseListener(new RemoteResource.FetchResponse() {
-                    @Override
-                    public void onError(Throwable e) {
-                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void onSuccess() {
-                        Toast.makeText(MainActivity.this, "Success", Toast.LENGTH_SHORT).show();
-                        remoteResource.activateFetched();
-                    }
-                });
-            }
+        clear.setOnClickListener(view -> {
+            remoteResource.clear();
+            Toast.makeText(MainActivity.this, "Cleared", Toast.LENGTH_SHORT).show();
         });
 
-        setDefault.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MessagesConfig defaultMessages = new MessagesConfig();
-                defaultMessages.setWelcomeMessage("Hello di default");
-                remoteResource.setDefaultConfig(defaultMessages);
+        read.setOnClickListener(view -> {
+            MessagesConfig m = remoteResource.get();
 
-                Toast.makeText(MainActivity.this, "Default config set", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        clear.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                remoteResource.clear();
-                Toast.makeText(MainActivity.this, "Cleared", Toast.LENGTH_SHORT).show();
-            }
-        });
-        read.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                MessagesConfig m = remoteResource.get();
-
-                Toast.makeText(MainActivity.this, "Readed", Toast.LENGTH_SHORT).show();
-                if (m == null)
-                    hello.setText("null");
-                else
-                    hello.setText(m.getWelcomeMessage());
-            }
+            Toast.makeText(MainActivity.this, "Readed", Toast.LENGTH_SHORT).show();
+            if (m == null)
+                hello.setText("null");
+            else
+                hello.setText(m.getWelcomeMessage());
         });
     }
 }

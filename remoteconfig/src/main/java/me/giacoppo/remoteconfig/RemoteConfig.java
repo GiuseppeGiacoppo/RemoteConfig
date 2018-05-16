@@ -17,6 +17,7 @@ public final class RemoteConfig {
     private static final int LRU_CACHE_DEFAULT_SIZE = 2;
     private WeakReference<Context> contextWR;
     private LruCache<String, RemoteResource> lruCache;
+
     /**
      * Init library with default values
      *
