@@ -85,7 +85,7 @@ public final class SharedPreferencesLocalRepository<T> implements ILocalReposito
 
                 String newActivatedConfig = Utilities.Json.merge(defaultConfig,activatedConfig);
 
-                sharedPreferences.edit().putString(newActivatedConfig, LAST_ACTIVATED_CONFIG).commit();
+                sharedPreferences.edit().putString(LAST_ACTIVATED_CONFIG,newActivatedConfig).commit();
                 return;
 
             default:

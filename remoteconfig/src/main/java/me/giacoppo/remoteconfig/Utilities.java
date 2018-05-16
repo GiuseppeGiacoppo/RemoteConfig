@@ -40,13 +40,17 @@ public final class Utilities {
         }
 
         // hint from https://stackoverflow.com/questions/34092373/merge-extend-json-objects-using-gson-in-java
-        public static String merge(String lowPriorityJson, String highPriorityJson) {
-            JsonObject low = Holder.INSTANCE.fromJson(lowPriorityJson, JsonObject.class);
-            JsonObject high = Holder.INSTANCE.fromJson(highPriorityJson, JsonObject.class);
+        public static String merge(String lowJson, String highJson) {
+            JsonObject low = from(lowJson, JsonObject.class);
+            JsonObject high = from(highJson, JsonObject.class);
+            return merge(low, high).getAsJsonObject().toString();
+        }
 
+        private static JsonObject merge(JsonObject low, JsonObject high) {
             for (Map.Entry<String, JsonElement> lowPriorityEntry : low.entrySet()) {
                 String lowPriorityKey = lowPriorityEntry.getKey();
                 JsonElement lowPriorityValue = lowPriorityEntry.getValue();
+
                 if (high.has(lowPriorityKey)) {
                     // manage conflict
                     JsonElement highPriorityValue = high.get(lowPriorityKey);
@@ -59,7 +63,7 @@ public final class Utilities {
                         }
                     } else if (highPriorityValue.isJsonObject() && lowPriorityValue.isJsonObject()) {
                         //merge objects
-                        merge(lowPriorityValue.getAsJsonObject().toString(), highPriorityValue.getAsJsonObject().toString());
+                        merge(lowPriorityValue.getAsJsonObject(), highPriorityValue.getAsJsonObject());
                     } else {
                         //do nothing
                     }
@@ -69,7 +73,7 @@ public final class Utilities {
                 }
             }
 
-            return high.getAsJsonObject().toString();
+            return high.getAsJsonObject();
         }
     }
 }
