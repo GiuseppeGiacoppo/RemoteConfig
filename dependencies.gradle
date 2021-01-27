@@ -1,7 +1,0 @@
-ext {
-    minSdkVersion = 14
-    targetSdkVersion = 27
-    compileSdkVersion = 27
-    versionCode = 101050
-    versionName = '1.1.5'
-}

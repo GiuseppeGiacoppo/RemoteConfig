@@ -1,0 +1,1 @@
+include (":remoteconfig", ":app")

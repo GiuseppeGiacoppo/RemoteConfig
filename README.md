@@ -1,106 +1,111 @@
 # Introduction
-[![Maven Central](https://img.shields.io/maven-central/v/me.giacoppo/remoteconfig.svg)](http://repo1.maven.org/maven2/me/giacoppo/remoteconfig/)
-[![Sonatype Nexus (Releases)](https://img.shields.io/nexus/r/https/oss.sonatype.org/me.giacoppo/remoteconfig.svg)](https://oss.sonatype.org/content/repositories/releases/me/giacoppo/remoteconfig/) 
-[![API](https://img.shields.io/badge/API-14%2B-green.svg?style=flat)](https://android-arsenal.com/api?level=14)
+[![](https://jitpack.io/v/GiuseppeGiacoppo/RemoteConfig.svg)](https://jitpack.io/#GiuseppeGiacoppo/RemoteConfig)
 
-RemoteConfig is an Android library that lets you manage all your remote configuration without requiring developers to manually download  each configuration and integrate them into the application.
+RemoteConfig is a Kotlin library that lets you manage all your remote configuration without requiring developers to manually download each configuration and integrate them into the Kotlin application.
 
-![Library Architecture](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/architecture.png)
+![Library Architecture](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/remoteconfig_image1.png)
 
-You can upload to your server many configurations (messages, flags, values and so on) in json files and the library will do all the work as fetching, storing them and making them available all over your app.
+You can have many configurations (messages, flags, server) on remote files, the library will do all the work for you.
 
-![Multiple Configurations](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/multiple_configurations.png)
-
-## Wiki
-A **complete and detailed** wiki is available [here](https://github.com/GiuseppeGiacoppo/RemoteConfig/wiki)
-
+![Multiple Configurations](https://github.com/GiuseppeGiacoppo/RemoteConfig/raw/master/readme/remoteconfig_image2.png)
 ## Download
 Grab via Gradle:
 ```groovy
-implementation 'me.giacoppo:remoteconfig:LATEST_VERSION'
+implementation 'com.github.GiuseppeGiacoppo.RemoteConfig:remoteconfig:LATEST_VERSION'
 ```
-
 ## Usage
 Retrieve a specific instance of RemoteResource for every configuration class
-```java
-RemoteResource<AppConfig> remoteAppConfig = RemoteConfig.of(AppConfig.class);
-RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
+```kotlin
+fun welcome() {
+    val remoteAppConfig = remoteConfig<AppConfig>()
+    val appConfig = remoteAppConfig.get()
+    println(appConfig.welcomeMessage)
+}
 ```
-You're done. `remoteAppConfig` and `remoteMessagesConfig` will have the last activated values for app and messages configurations.
-
-You will get an instance of a specific configuration with the `get()` method:
-```java
-AppConfig appConfig = remoteAppConfig.get();
-String apiEndPoint = appConfig.getBaseUrl();
-...
-```
-
+You're done. `remoteAppConfig` will provide you the latest app configuration.
 ## Setup library
-You can initialize RemoteConfig in your Application class including a single line of code. This has to be done once in your application lifecycle
-```java
-RemoteConfig.initializeWithDefaults(this);
-```
-This will initialize the library with default values. See below for specific details
+You need to setup each remote configuration with minimum effort. For each configuration, specify a remote repository and a local repository.
+The library will know where to fetch the configuration and where to store it locally.
+```kotlin
+fun main(args: Array<String>) {
+    initRemoteConfig {
+        remoteResource<AppConfig>(
+            storage("./configs"),
+            network("https://www.your.server/latest/appconfig.json")
+        )
 
-### Initialize each remote resource
-Initialize each remote resource before using it specifying remote and local repository. Remote repository is used to fetch updated configuration, local is used to store it inside your application.
-You can create your own local and remote repository or use the default ones:
-```java
-RemoteConfig.of(MessagesConfig.class).initialize(
-        new RemoteConfigSettings.Builder<MessagesConfig>()
-                .setInternalRepository(SharedPreferencesLocalRepository.create(this, MessagesConfig.class))
-                .setRemoteRepository(HttpGETRemoteRepository.create(MessagesConfig.class, "REMOTE_JSON_URL"))
-                .setCacheStrategy(CacheStrategy.NO_CACHE)
-                .build()
-);
+        remoteResource<MessagesConfig>(
+            // init other configs
+        )
+    }
+}
 ```
-### Set default values for each configuration
-You should set default values for each configuration, so that your app doesn't have to wait to fetch values at least once.
-```java
-AppConfig appConfig = new AppConfig();
-appConfig.setBaseUrl("http://your.api.server/");
-appConfig.setDefaultTimeout(10);
-RemoteConfig.of(AppConfig.class).setDefaultConfig(appConfig);
+### Default configuration
+Fetching is an async operation, this means it can take a while, and it can fail.
+It is possible to set a default configuration that will be marked as *active* if no more recent config is available.
+```kotlin
+val remoteAppConfig = remoteConfig<AppConfig>()
+remoteAppConfig.setDefaultConfig(AppConfig("This is the default welcome message."))
 ```
-### Fetch config from network
-1. To fetch an updated configuration from a remote json, call the `fetch()` method
-2. To set fetched configuration available to your app, call the `activateFetched()` method
+### Fetch from the server
+Fetch the configuration every time you need, invoking `fetch` method. Fresh configuration will be saved locally and you can activate it.
+```kotlin
+remoteAppConfig.fetch({
+    println("Fetch is successful")
+    remoteAppConfig.activateFetched()
+}, {
+    println("Fetch is failed")
+    it.printStackTrace()
+})
+```
+### Multiple configurations
+The configuration will be named by the configuration class name. 
+You can have multiple configurations that share the same class by specifying a custom resource name
+```kotlin
+fun main(args: Array<String>) {
+    initRemoteConfig {
+        remoteResource<MessagesConfig>(
+            storage("./configs"),
+            network("https://www.your.server/latest/homemessages.json")
+        ) {
+            resourceName = "home-messages"
+        }
 
-```java
-final RemoteResource<MessagesConfig> remoteMessagesConfig = RemoteConfig.of(MessagesConfig.class);
-remoteMessagesConfig.fetch().addSuccessListener(new RemoteResource.FetchSuccess() {
-                    @Override
-                    public void onSuccess() {
-                        remoteMessagesConfig.activateFetched();
-                    }
-                });
+        remoteResource<MessagesConfig>(
+            storage("./configs"),
+            network("https://www.your.server/latest/detailmessages.json")
+        ) {
+            resourceName = "detail-messages"
+        }
+    }
+    
+    // you can then fetch, activate and use it
+    val homeMessages = remoteConfig<MessagesConfig>("home-messages")
+    val detailMessages = remoteConfig<MessagesConfig>("detail-messages")
+}
 ```
-
+### Configuration Format
+RemoteConfig expects that each configuration is in json format. It supports also text format, and you can even create your own `ResourceMapper`.
+```kotlin
+fun main(args: Array<String>) {
+    initRemoteConfig {
+        remoteResource<String>(
+            storage("./configs"),
+            network("https://www.your.server/latest/custom.txt")
+        ) {
+            format = TextResourceMapper
+        }
+    }
+}
+```
 ## Contributing
-
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
-3. Commit your changes: `git commit -am 'Add some feature'`
+3. Commit your changes: `git commit -am 'Added some feature'`
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :)
 
 ## Credits and libraries
 RemoteConfig is an open source library inspired by [Firebase Remote Config](https://firebase.google.com/docs/remote-config)
-
-* [RxJava](https://github.com/ReactiveX/RxJava) and [RxAndroid](https://github.com/ReactiveX/RxAndroid)
 * [Gson](https://github.com/google/gson)
 * [OkHttp](http://square.github.io/okhttp)
-
-## License
-    Copyright 2018 Giuseppe Giacoppo
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-    
-       http://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
