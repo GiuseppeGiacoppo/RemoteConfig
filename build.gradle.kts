@@ -29,7 +29,7 @@ val sourcesJar by tasks.creating(Jar::class) {
 publishing {
     publications {
         create<MavenPublication>(rootProject.ext.get("projectName") as String) {
-            groupId = "${rootProject.ext.get("projectGroup")}.${rootProject.ext.get("projectName")}" as String
+            groupId = rootProject.ext.get("projectGroup") as String
             artifactId = rootProject.ext.get("projectArtifact") as String
             version = rootProject.ext.get("projectVersion") as String
 
@@ -61,7 +61,7 @@ buildscript {
     val githubName by rootProject.extra("GiuseppeGiacoppo")
     val projectVersion by rootProject.extra("2.0.0")
     val projectGroup by rootProject.extra("com.github.$githubName")
-    val projectArtifact by rootProject.extra("remoteconfig")
+    val projectArtifact by rootProject.extra("${projectName}")
 
     val projectDescription by rootProject.extra("RemoteConfig is a Kotlin library that lets you manage all your remote configuration without requiring developers to manually download each configuration and integrate them into the Kotlin application.")
     val githubLink by rootProject.extra("https://github.com/$githubName")
