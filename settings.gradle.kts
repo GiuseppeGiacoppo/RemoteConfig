@@ -1,1 +1,1 @@
-include (":remoteconfig", ":app")
+rootProject.name = "RemoteConfig"

@@ -1,12 +1,10 @@
-package me.giacoppo.remoteconfig.app
+package me.giacoppo.remoteconfig
 
-import me.giacoppo.remoteconfig.*
-
-class DemoApplication {
+class TestApplication {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val app = DemoApplication()
+            val app = TestApplication()
             app.demo()
         }
     }
