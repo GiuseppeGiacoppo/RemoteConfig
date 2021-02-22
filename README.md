@@ -11,7 +11,12 @@ You can have many configurations (messages, flags, server) on remote files, the 
 ## Download
 Grab via Gradle:
 ```groovy
-implementation 'com.github.GiuseppeGiacoppo.RemoteConfig:remoteconfig:LATEST_VERSION'
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+dependencies {
+    implementation 'com.github.GiuseppeGiacoppo:RemoteConfig:LATEST_VERSION'
+}
 ```
 ## Usage
 Retrieve a specific instance of RemoteResource for every configuration class
