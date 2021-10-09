@@ -64,10 +64,6 @@ class StorageResourceLocalRepositoryTest : TestCase() {
         assertFalse(Files.exists(testDirectory.resolve("${resourceName}_active")))
     }
 
-    override fun setUp() {
-        Files.createDirectory(testDirectory)
-    }
-
     override fun tearDown() {
         testDirectory.toFile().deleteRecursively()
     }
