@@ -58,7 +58,7 @@ val deploy by tasks.creating(GradleBuild::class) {
 buildscript {
     val projectName by rootProject.extra("RemoteConfig")
     val githubName by rootProject.extra("GiuseppeGiacoppo")
-    val projectVersion by rootProject.extra("2.0.0")
+    val projectVersion by rootProject.extra("2.0.1")
     val projectGroup by rootProject.extra("com.github.$githubName")
     val projectArtifact by rootProject.extra("${projectName}")
 
