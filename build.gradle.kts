@@ -13,12 +13,11 @@ repositories {
 
 dependencies {
     api ("com.github.GiuseppeGiacoppo:RemoteConfigCore:1.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.9.0")
-    implementation("com.google.code.gson:gson:2.8.4")
+    implementation("com.squareup.okhttp3:okhttp:4.9.2")
+    implementation("com.google.code.gson:gson:2.8.8")
 
-    testImplementation("junit:junit:4.13.1")
-    testImplementation("org.mockito:mockito-core:3.3.3")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.2")
 }
 
 val sourcesJar by tasks.creating(Jar::class) {
